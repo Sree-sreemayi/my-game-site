@@ -1,256 +1,170 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Epic Game Hub</title>
-  <style>
-    * {
-      box-sizing: border-box;
-    }
-    body, html {
-      margin: 0;
-      padding: 0;
-      height: 100%;
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #1f1c2c, #928dab);
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
-
-    header {
-      padding: 2rem 1rem;
-      text-align: center;
-      background: rgba(0,0,0,0.3);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-      font-weight: 600;
-      letter-spacing: 2px;
-      font-size: 2.5rem;
-      text-transform: uppercase;
-      user-select: none;
-      text-shadow: 0 0 10px #72e0ff;
-    }
-
-    main {
-      flex: 1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 2rem;
-      position: relative;
-    }
-
-    #game-container {
-      background: #222;
-      border-radius: 16px;
-      width: 900px;
-      max-width: 95vw;
-      height: 600px;
-      box-shadow:
-        0 0 10px #00fff7,
-        inset 0 0 30px #00fff7;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      position: relative;
-      overflow: hidden;
-      flex-direction: column;
-    }
-
-    #start-btn {
-      background: #00fff7;
-      color: #111;
-      font-weight: 700;
-      border: none;
-      border-radius: 50px;
-      padding: 1rem 3rem;
-      font-size: 1.5rem;
-      cursor: pointer;
-      box-shadow: 0 4px 15px rgba(0,255,247,0.7);
-      transition: background 0.3s ease, box-shadow 0.3s ease;
-      user-select: none;
-      margin-top: 2rem;
-    }
-    #start-btn:hover {
-      background: #00d6cc;
-      box-shadow: 0 6px 25px rgba(0,214,204,0.9);
-    }
-
-    #game-canvas {
-      background: #111;
-      width: 100%;
-      height: 100%;
-      border-radius: 16px;
-      box-shadow: inset 0 0 20px #00fff7;
-      display: none;
-    }
-
-    footer {
-      text-align: center;
-      padding: 1rem;
-      background: rgba(0,0,0,0.25);
-      font-size: 0.9rem;
-      letter-spacing: 1px;
-      user-select: none;
-    }
-
-    @media (max-width: 600px) {
-      header {
-        font-size: 1.8rem;
-        padding: 1rem 1rem;
-      }
-      #game-container {
-        height: 400px;
-      }
-      #start-btn {
-        padding: 0.75rem 2rem;
-        font-size: 1.2rem;
-      }
-    }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Epic Car Dodge – Animated Sprite</title>
+<style>
+  * { box-sizing:border-box; }
+  html,body { margin:0;padding:0;font-family:Poppins,sans-serif;background:linear-gradient(to bottom,#0f2027,#203a43,#2c5364);color:#fff;height:100%;display:flex;flex-direction:column;}
+  header,footer {text-align:center;padding:1rem;background:rgba(0,0,0,0.3);}
+  main { flex:1; display:flex; justify-content:center; align-items:center; padding:1rem; }
+  #game-container {position:relative;width:90vw;max-width:480px;height:75vh;max-height:800px;background:#2d2d2d;border-radius:12px;overflow:hidden;box-shadow:0 0 20px #00fff7;}
+  canvas { display:none; width:100%; height:100%; background:#333;}
+  #overlay { position:absolute; top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);display:flex;flex-direction:column;justify-content:center;align-items:center;z-index:2;}
+  .btn {background:#00fff7;color:#111;border:none;padding:0.8rem 2rem;border-radius:50px;font-size:1.2rem; font-weight:bold;cursor:pointer;box-shadow:0 4px 15px rgba(0,255,247,0.7);transition:0.3s;} .btn:hover{background:#00d6cc;}
+  #score {position:absolute;top:1rem;left:1rem;background:rgba(0,0,0,0.5);padding:0.5rem 1rem;border-radius:8px;font-size:1rem;z-index:2;}
+  @media(max-width:400px){.btn{font-size:1rem;padding:0.6rem 1.2rem;}header{font-size:1.5rem;}}
+</style>
 </head>
 <body>
-
-  <header>Epic Game Hub</header>
-
-  <main>
-    <div id="game-container">
-      <div id="game-intro" style="text-align:center; max-width: 80%;">
-        <h2 style="color:#00fff7; margin-bottom:0.5rem;">Dodge the Falling Blocks</h2>
-        <p style="color:#a0e9f7; font-size: 1.2rem;">
-          Move with ⬅️ ➡️ keys. Avoid falling blocks. Click Start to play!
-        </p>
-        <button id="start-btn">Start Game</button>
-      </div>
-      <canvas id="game-canvas"></canvas>
+<header>Epic Car Dodge – Animated Sprite</header>
+<main>
+  <div id="game-container">
+    <canvas id="game-canvas"></canvas>
+    <div id="score">Score: 0</div>
+    <div id="overlay">
+      <h2>Tap or Press to Start</h2>
+      <button class="btn" id="start-btn">Start Game</button>
     </div>
-  </main>
+  </div>
+</main>
+<footer>© 2025 Epic Game Hub</footer>
 
-  <footer>&copy; 2025 Epic Game Hub. All rights reserved.</footer>
+<!-- Assets -->
+<img id="carSprite" src="car_sprites.png" hidden/>
+<audio id="engineSound" src="engine-rev.mp3"></audio>
+<audio id="collisionSound" src="collision.mp3"></audio>
+<audio id="shieldSound" src="powerup-shield.mp3"></audio>
+<audio id="boostSound" src="powerup-speed.mp3"></audio>
 
-  <script>
-    const startBtn = document.getElementById('start-btn');
-    const gameIntro = document.getElementById('game-intro');
-    const gameCanvas = document.getElementById('game-canvas');
-    const ctx = gameCanvas.getContext('2d');
+<script>
+const canvas = document.getElementById('game-canvas');
+const ctx = canvas.getContext('2d');
+const container = document.getElementById('game-container');
+const overlay = document.getElementById('overlay');
+const startBtn = document.getElementById('start-btn');
+const scoreEl = document.getElementById('score');
 
-    let player, blocks, keys = {}, gameOver = false;
+const carImg = document.getElementById('carSprite');
+const engineSound = document.getElementById('engineSound');
+const collisionSound = document.getElementById('collisionSound');
+const shieldSound = document.getElementById('shieldSound');
+const boostSound = document.getElementById('boostSound');
 
-    function resizeCanvas() {
-      const container = document.getElementById('game-container');
-      gameCanvas.width = container.clientWidth;
-      gameCanvas.height = container.clientHeight;
+let car, obstacles=[], powerUps=[], keys={}, score=0, speed=3, gameOver=false;
+let frame=0, currentFrame=1, shield=false, boost=false, boostTimer=0;
+
+function resizeCanvas(){ canvas.width=container.clientWidth; canvas.height=container.clientHeight; }
+window.addEventListener('resize', resizeCanvas);
+
+function reset(){
+  score=0; speed=3; gameOver=false; frame=0;currentFrame=1;
+  shield=false; boost=false; boostTimer=0;
+  car = {
+    w:canvas.width*0.2, h:canvas.height*0.1,
+    x:canvas.width/2-canvas.width*0.1, y:canvas.height*0.8,
+    speed:canvas.width/80
+  };
+  obstacles=[]; powerUps=[];
+  scoreEl.textContent="Score:0";
+}
+
+function spawnObstacle(){
+  const w=canvas.width*0.2;
+  obstacles.push({x:Math.random()*(canvas.width-w),y:-w,w:h=w, h:w*1.2, speed:speed+Math.random()});
+}
+
+function spawnPowerUp(){
+  const size=30, type=(Math.random()<0.5?'shield':'boost');
+  powerUps.push({x:Math.random()*(canvas.width-size),y:-size,size,type});
+}
+
+function drawBackground(){
+  ctx.fillStyle='#2d2d2d';ctx.fillRect(0,0,canvas.width,canvas.height);
+}
+
+function drawCar(){
+  const sx = currentFrame*128, sy=0; // sprite frame width assumed 128px
+  ctx.drawImage(carImg, sx, sy,128,128,car.x,car.y,car.w,car.h);
+}
+
+function drawObstacles(){
+  obstacles.forEach(o=>ctx.fillStyle='#ff5555',ctx.fillRect(o.x,o.y+=o.speed,o.w,o.h));
+  obstacles=obstacles.filter(o=>o.y<canvas.height);
+}
+
+function drawPowerUps(){
+  powerUps.forEach(p=>{
+    ctx.fillStyle = p.type==='shield'?'#00f':'#ff0';
+    ctx.beginPath();
+    ctx.arc(p.x+p.size/2,p.y+=2,p.size/2,0,2*Math.PI);
+    ctx.fill();
+  });
+  powerUps=powerUps.filter(p=>p.y<canvas.height);
+}
+
+function collision(o){
+  return car.x<o.x+o.w && car.x+car.w>o.x && car.y<o.y+o.h && car.y+car.h>o.y;
+}
+
+function update(){
+  if(gameOver)return;
+  frame++;
+  if(frame%5===0){
+    currentFrame = keys['ArrowLeft']||keys['a']?0: keys['ArrowRight']||keys['d']?2:1;
+  }
+  if(keys['ArrowLeft']||keys['a'])car.x-=car.speed;
+  if(keys['ArrowRight']||keys['d'])car.x+=car.speed;
+  car.x=Math.max(0,Math.min(canvas.width-car.w,car.x));
+  obstacles.forEach(o=>o.y+=o.speed);
+  powerUps.forEach(p=>p.y+=2);
+  drawBackground(); drawCar(); drawObstacles(); drawPowerUps();
+
+  obstacles.forEach(o=>{ if(collision(o)&&!shield){ collisionSound.play(); endGame();}})
+  powerUps.forEach((p,i)=>{
+    if(collision(p)){
+      if(p.type==='shield'){ shield=true; shieldSound.play();}
+      else { boost=true; boostTimer=300; boostSound.play();}
+      powerUps.splice(i,1);
     }
+  });
 
-    window.addEventListener('resize', resizeCanvas);
+  if(boost){ car.speed = canvas.width/40; boostTimer--; if(boostTimer<=0){ boost=false; car.speed=canvas.width/80;} }
 
-    function startGame() {
-      resizeCanvas();
-      gameIntro.style.display = 'none';
-      gameCanvas.style.display = 'block';
+  score++; speed+=0.0005;
+  scoreEl.textContent = `Score:${score}`;
 
-      player = {
-        x: gameCanvas.width / 2 - 25,
-        y: gameCanvas.height - 60,
-        width: 50,
-        height: 20,
-        color: '#00fff7',
-        speed: 6
-      };
+  if(Math.random()<0.01)spawnObstacle();
+  if(Math.random()<0.005)spawnPowerUp();
 
-      blocks = [];
-      gameOver = false;
+  requestAnimationFrame(update);
+}
 
-      // Start game loop
-      requestAnimationFrame(updateGame);
-    }
+function endGame(){
+  gameOver=true;
+  overlay.innerHTML=`<h2>Game Over</h2><p>Score:${score}</p><button class="btn" id="restart">Restart</button>`;
+  overlay.style.display='flex';
+  collisionSound.play();
+  document.getElementById('restart').onclick=()=>{overlay.style.display='none'; start();};
+}
 
-    function spawnBlock() {
-      const size = Math.random() * 50 + 20;
-      const x = Math.random() * (gameCanvas.width - size);
-      blocks.push({
-        x: x,
-        y: -size,
-        width: size,
-        height: size,
-        color: '#ff5555',
-        speed: Math.random() * 3 + 2
-      });
-    }
+function start(){
+  resizeCanvas(); reset();
+  overlay.style.display='none';
+  canvas.style.display='block';
+  engineSound.currentTime=0; engineSound.play();
+  update();
+}
 
-    function drawPlayer() {
-      ctx.fillStyle = player.color;
-      ctx.fillRect(player.x, player.y, player.width, player.height);
-    }
-
-    function drawBlocks() {
-      blocks.forEach(block => {
-        ctx.fillStyle = block.color;
-        ctx.fillRect(block.x, block.y, block.width, block.height);
-      });
-    }
-
-    function updateGame() {
-      if (gameOver) return;
-
-      ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
-
-      // Move player
-      if (keys['ArrowLeft']) player.x -= player.speed;
-      if (keys['ArrowRight']) player.x += player.speed;
-      player.x = Math.max(0, Math.min(gameCanvas.width - player.width, player.x));
-
-      drawPlayer();
-
-      // Move and draw blocks
-      blocks.forEach(block => {
-        block.y += block.speed;
-      });
-      drawBlocks();
-
-      // Remove off-screen blocks
-      blocks = blocks.filter(block => block.y < gameCanvas.height + block.height);
-
-      // Collision detection
-      for (let block of blocks) {
-        if (
-          block.x < player.x + player.width &&
-          block.x + block.width > player.x &&
-          block.y < player.y + player.height &&
-          block.y + block.height > player.y
-        ) {
-          endGame();
-          return;
-        }
-      }
-
-      // Spawn blocks
-      if (Math.random() < 0.05) spawnBlock();
-
-      requestAnimationFrame(updateGame);
-    }
-
-    function endGame() {
-      gameOver = true;
-      ctx.fillStyle = '#fff';
-      ctx.font = '48px Poppins, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('Game Over', gameCanvas.width / 2, gameCanvas.height / 2);
-    }
-
-    startBtn.addEventListener('click', startGame);
-
-    // Keyboard input
-    window.addEventListener('keydown', (e) => {
-      keys[e.key] = true;
-    });
-    window.addEventListener('keyup', (e) => {
-      keys[e.key] = false;
-    });
-  </script>
-
+startBtn.onclick=start;
+window.addEventListener('keydown',e=>keys[e.key]=true);
+window.addEventListener('keyup',e=>keys[e.key]=false);
+container.addEventListener('touchstart',e=>{
+  const x=e.touches[0].clientX-canvas.getBoundingClientRect().left;
+  keys[x<canvas.width/2?'ArrowLeft':'ArrowRight']=true;
+});
+container.addEventListener('touchend',()=>{keys['ArrowLeft']=keys['ArrowRight']=false;});
+</script>
 </body>
 </html>
