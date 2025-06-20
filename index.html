@@ -119,9 +119,9 @@
   <main>
     <div id="game-container">
       <div id="game-intro" style="text-align:center; max-width: 80%;">
-        <h2 style="color:#00fff7; margin-bottom:0.5rem;">Welcome to the Ultimate Game!</h2>
+        <h2 style="color:#00fff7; margin-bottom:0.5rem;">Dodge the Falling Blocks</h2>
         <p style="color:#a0e9f7; font-size: 1.2rem;">
-          Get ready for an immersive experience. Click Start to play!
+          Move with ⬅️ ➡️ keys. Avoid falling blocks. Click Start to play!
         </p>
         <button id="start-btn">Start Game</button>
       </div>
@@ -137,7 +137,8 @@
     const gameCanvas = document.getElementById('game-canvas');
     const ctx = gameCanvas.getContext('2d');
 
-    // Resize canvas to match container size
+    let player, blocks, keys = {}, gameOver = false;
+
     function resizeCanvas() {
       const container = document.getElementById('game-container');
       gameCanvas.width = container.clientWidth;
@@ -146,46 +147,108 @@
 
     window.addEventListener('resize', resizeCanvas);
 
-    // Ball object
-    let ball = {
-      x: 100,
-      y: 100,
-      radius: 20,
-      dx: 4,
-      dy: 3,
-      color: '#00fff7'
-    };
+    function startGame() {
+      resizeCanvas();
+      gameIntro.style.display = 'none';
+      gameCanvas.style.display = 'block';
 
-    function drawBall() {
-      ctx.beginPath();
-      ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
-      ctx.fillStyle = ball.color;
-      ctx.fill();
-      ctx.closePath();
+      player = {
+        x: gameCanvas.width / 2 - 25,
+        y: gameCanvas.height - 60,
+        width: 50,
+        height: 20,
+        color: '#00fff7',
+        speed: 6
+      };
+
+      blocks = [];
+      gameOver = false;
+
+      // Start game loop
+      requestAnimationFrame(updateGame);
+    }
+
+    function spawnBlock() {
+      const size = Math.random() * 50 + 20;
+      const x = Math.random() * (gameCanvas.width - size);
+      blocks.push({
+        x: x,
+        y: -size,
+        width: size,
+        height: size,
+        color: '#ff5555',
+        speed: Math.random() * 3 + 2
+      });
+    }
+
+    function drawPlayer() {
+      ctx.fillStyle = player.color;
+      ctx.fillRect(player.x, player.y, player.width, player.height);
+    }
+
+    function drawBlocks() {
+      blocks.forEach(block => {
+        ctx.fillStyle = block.color;
+        ctx.fillRect(block.x, block.y, block.width, block.height);
+      });
     }
 
     function updateGame() {
+      if (gameOver) return;
+
       ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
-      drawBall();
 
-      ball.x += ball.dx;
-      ball.y += ball.dy;
+      // Move player
+      if (keys['ArrowLeft']) player.x -= player.speed;
+      if (keys['ArrowRight']) player.x += player.speed;
+      player.x = Math.max(0, Math.min(gameCanvas.width - player.width, player.x));
 
-      if (ball.x + ball.radius > gameCanvas.width || ball.x - ball.radius < 0) {
-        ball.dx *= -1;
+      drawPlayer();
+
+      // Move and draw blocks
+      blocks.forEach(block => {
+        block.y += block.speed;
+      });
+      drawBlocks();
+
+      // Remove off-screen blocks
+      blocks = blocks.filter(block => block.y < gameCanvas.height + block.height);
+
+      // Collision detection
+      for (let block of blocks) {
+        if (
+          block.x < player.x + player.width &&
+          block.x + block.width > player.x &&
+          block.y < player.y + player.height &&
+          block.y + block.height > player.y
+        ) {
+          endGame();
+          return;
+        }
       }
-      if (ball.y + ball.radius > gameCanvas.height || ball.y - ball.radius < 0) {
-        ball.dy *= -1;
-      }
+
+      // Spawn blocks
+      if (Math.random() < 0.05) spawnBlock();
 
       requestAnimationFrame(updateGame);
     }
 
-    startBtn.addEventListener('click', () => {
-      resizeCanvas();
-      gameIntro.style.display = 'none';
-      gameCanvas.style.display = 'block';
-      updateGame();
+    function endGame() {
+      gameOver = true;
+      ctx.fillStyle = '#fff';
+      ctx.font = '48px Poppins, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Game Over', gameCanvas.width / 2, gameCanvas.height / 2);
+    }
+
+    startBtn.addEventListener('click', startGame);
+
+    // Keyboard input
+    window.addEventListener('keydown', (e) => {
+      keys[e.key] = true;
+    });
+    window.addEventListener('keyup', (e) => {
+      keys[e.key] = false;
     });
   </script>
 
