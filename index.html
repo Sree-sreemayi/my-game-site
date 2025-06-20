@@ -3,590 +3,217 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Advanced Ghost Chase Game</title>
+<title>Ghost House Chase Game</title>
 <style>
-  /* Reset and styling */
-  * {
-    box-sizing: border-box;
-  }
-  body, html {
-    margin: 0; padding: 0; height: 100%;
-    background: linear-gradient(135deg, #0d1b2a, #1b263b);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: #eee;
-    display: flex;
-    flex-direction: column;
-  }
-  header {
-    text-align: center;
-    padding: 1rem;
-    font-size: 2rem;
-    font-weight: 700;
-    letter-spacing: 2px;
-    text-shadow: 0 0 10px #a0c4ff;
-  }
-  main {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-  }
-  #game-container {
-    position: relative;
-    width: 90vw;
-    max-width: 900px;
-    aspect-ratio: 16 / 9;
-    background: radial-gradient(circle at center, #3a506b, #1b263b);
-    border-radius: 20px;
-    box-shadow: 0 0 20px #30475e;
+  body {
+    margin: 0;
     overflow: hidden;
+    background: #121212;
+    font-family: 'Arial', sans-serif;
   }
   canvas {
     display: block;
-    width: 100%;
-    height: 100%;
+    margin: auto;
+    background: url('https://i.imgur.com/guTf18W.jpg') no-repeat center center/cover;
+    border: 3px solid white;
+    box-shadow: 0 0 30px #00fff7;
   }
-  #start-overlay {
-    position: absolute;
-    inset: 0;
-    background: rgba(10, 25, 50, 0.85);
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    color: #a0c4ff;
-    font-size: 1.5rem;
-    user-select: none;
-    z-index: 10;
-    border-radius: 20px;
-  }
-  #start-btn {
-    margin-top: 1.5rem;
-    padding: 0.75rem 2.5rem;
-    font-size: 1.3rem;
-    background: #89c2d9;
-    border: none;
-    border-radius: 40px;
-    color: #1b263b;
-    cursor: pointer;
-    font-weight: 700;
-    box-shadow: 0 4px 12px rgba(137,194,217,0.8);
-    transition: background-color 0.3s ease;
-  }
-  #start-btn:hover {
-    background: #61a0bf;
-  }
-  #scoreboard {
-    position: absolute;
-    top: 10px;
-    left: 15px;
-    font-size: 1.1rem;
-    font-weight: 700;
-    color: #dbe9f4;
-    text-shadow: 0 0 6px #7da4d9;
-    user-select: none;
-    z-index: 11;
-  }
-  #mute-btn {
-    position: absolute;
-    top: 10px;
-    right: 15px;
-    font-size: 1.2rem;
-    background: #89c2d9;
-    border-radius: 10px;
-    border: none;
-    padding: 0.25rem 0.6rem;
-    color: #1b263b;
-    cursor: pointer;
-    font-weight: 700;
-    user-select: none;
-    box-shadow: 0 0 8px #7da4d9;
-    z-index: 11;
-  }
-  #mute-btn:hover {
-    background: #61a0bf;
-  }
-  /* Touch Controls */
-  #touch-controls {
-    position: absolute;
-    bottom: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 40px;
-    z-index: 11;
-    user-select: none;
-  }
-  .touch-btn {
-    width: 60px;
-    height: 60px;
-    background: #4a708bcc;
-    border-radius: 50%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #dbe9f4;
-    font-size: 2.5rem;
-    box-shadow: 0 0 10px #7da4d9;
-    cursor: pointer;
-    user-select: none;
-  }
-  .touch-btn:active {
-    background: #61a0bf;
-    box-shadow: 0 0 20px #a0c4ff;
+  #info {
+    text-align: center;
+    color: white;
+    margin-top: 10px;
+    font-size: 20px;
+    letter-spacing: 0.05em;
   }
 </style>
 </head>
 <body>
-
-<header>Advanced Ghost Chase Game</header>
-
-<main>
-  <div id="game-container">
-    <canvas id="game-canvas"></canvas>
-    <div id="start-overlay">
-      <div>Use Arrow Keys or Tap Buttons to Move the Ghost</div>
-      <button id="start-btn">Start Game</button>
-    </div>
-    <div id="scoreboard">Score: 0</div>
-    <button id="mute-btn" title="Mute/Unmute Music">🔊</button>
-    <div id="touch-controls" aria-label="Touch Controls" role="group">
-      <div id="btn-left" class="touch-btn" aria-label="Move Left">◀</div>
-      <div id="btn-right" class="touch-btn" aria-label="Move Right">▶</div>
-    </div>
-  </div>
-</main>
+<canvas id="gameCanvas" width="800" height="500"></canvas>
+<div id="info">Use Arrow Keys to move the man. Escape the ghost!</div>
 
 <script>
-(() => {
-  const canvas = document.getElementById('game-canvas');
-  const ctx = canvas.getContext('2d');
-  const startOverlay = document.getElementById('start-overlay');
-  const startBtn = document.getElementById('start-btn');
-  const scoreboard = document.getElementById('scoreboard');
-  const btnLeft = document.getElementById('btn-left');
-  const btnRight = document.getElementById('btn-right');
-  const muteBtn = document.getElementById('mute-btn');
-  const gameContainer = document.getElementById('game-container');
+// Get canvas context
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
 
-  // Responsive canvas size
-  function resizeCanvas() {
-    canvas.width = gameContainer.clientWidth;
-    canvas.height = gameContainer.clientHeight;
+// Game variables
+const man = {
+  x: 100,
+  y: 400,
+  width: 40,
+  height: 60,
+  speed: 4,
+  color: '#FFD700'
+};
+
+const ghost = {
+  x: 700,
+  y: 100,
+  width: 50,
+  height: 60,
+  speed: 2,
+  color: '#AAFFFC',
+  bobbing: 0,
+  bobbingDirection: 1
+};
+
+let keys = {};
+let gameOver = false;
+let win = false;
+const escapeZone = {x: 750, y: 450, width: 50, height: 50};
+
+// Controls
+window.addEventListener('keydown', e => {
+  keys[e.key] = true;
+});
+window.addEventListener('keyup', e => {
+  keys[e.key] = false;
+});
+
+// Utility functions
+function drawMan() {
+  ctx.fillStyle = man.color;
+  // Draw simple man as a rectangle with a head circle
+  ctx.fillRect(man.x, man.y, man.width, man.height);
+  ctx.beginPath();
+  ctx.arc(man.x + man.width / 2, man.y, man.width / 2, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawGhost() {
+  // Bobbing animation for ghost
+  ghost.bobbing += ghost.bobbingDirection * 0.05;
+  if (ghost.bobbing > 5 || ghost.bobbing < -5) ghost.bobbingDirection *= -1;
+
+  ctx.fillStyle = ghost.color;
+  ctx.beginPath();
+  // Ghost body shape (semi-circle + waves)
+  ctx.moveTo(ghost.x, ghost.y + ghost.height + ghost.bobbing);
+  ctx.quadraticCurveTo(ghost.x + ghost.width / 2, ghost.y - 20 + ghost.bobbing, ghost.x + ghost.width, ghost.y + ghost.height + ghost.bobbing);
+  // Bottom waves
+  const waveCount = 5;
+  const waveWidth = ghost.width / waveCount;
+  for (let i = 0; i < waveCount; i++) {
+    let startX = ghost.x + i * waveWidth;
+    ctx.lineTo(startX + waveWidth / 2, ghost.y + ghost.height + 10 + (i % 2 === 0 ? 5 : 0) + ghost.bobbing);
   }
-  window.addEventListener('resize', resizeCanvas);
-  resizeCanvas();
+  ctx.closePath();
+  ctx.fill();
 
-  // Game state
-  let gameRunning = false;
-  let score = 0;
-  let keys = {};
-  let musicMuted = false;
+  // Ghost eyes
+  ctx.fillStyle = '#000';
+  ctx.beginPath();
+  ctx.ellipse(ghost.x + ghost.width / 3, ghost.y + 20 + ghost.bobbing, 7, 10, 0, 0, Math.PI * 2);
+  ctx.ellipse(ghost.x + 2 * ghost.width / 3, ghost.y + 20 + ghost.bobbing, 7, 10, 0, 0, Math.PI * 2);
+  ctx.fill();
 
-  // Load images (sprites)
-  const ghostSprite = new Image();
-  ghostSprite.src = 'https://i.imgur.com/G6IqvPC.png'; // ghost sprite sheet (4 frames horizontal)
-  // Enemy sprite sheet (4 frames horizontal)
-  const enemySprite = new Image();
-  enemySprite.src = 'https://i.imgur.com/vFeJP7y.png'; // red ghost-like enemy
+  ctx.fillStyle = '#FFF';
+  ctx.beginPath();
+  ctx.ellipse(ghost.x + ghost.width / 3 - 3, ghost.y + 18 + ghost.bobbing, 3, 5, 0, 0, Math.PI * 2);
+  ctx.ellipse(ghost.x + 2 * ghost.width / 3 - 3, ghost.y + 18 + ghost.bobbing, 3, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+}
 
-  // Power-up icons (simple circles with emoji drawn)
+function drawEscapeZone() {
+  ctx.fillStyle = 'rgba(0,255,0,0.3)';
+  ctx.fillRect(escapeZone.x, escapeZone.y, escapeZone.width, escapeZone.height);
+  ctx.strokeStyle = 'lime';
+  ctx.strokeRect(escapeZone.x, escapeZone.y, escapeZone.width, escapeZone.height);
+  ctx.fillStyle = 'lime';
+  ctx.font = '16px Arial';
+  ctx.fillText('Escape Here', escapeZone.x - 10, escapeZone.y - 10);
+}
 
-  // Sound Effects
-  const sounds = {
-    powerup: new Audio('https://freesound.org/data/previews/341/341695_6248998-lq.mp3'), // powerup beep
-    hit: new Audio('https://freesound.org/data/previews/341/341695_6248998-lq.mp3'), // reuse beep for hit (change if you want)
-    music: new Audio('https://cdn.pixabay.com/download/audio/2022/03/24/audio_8e74238a62.mp3?filename=bright-future-1135.mp3') // royalty-free loop music
-  };
-  sounds.music.loop = true;
-  sounds.music.volume = 0.25;
+function moveMan() {
+  if (keys['ArrowLeft'] && man.x > 0) man.x -= man.speed;
+  if (keys['ArrowRight'] && man.x + man.width < canvas.width) man.x += man.speed;
+  if (keys['ArrowUp'] && man.y > 0) man.y -= man.speed;
+  if (keys['ArrowDown'] && man.y + man.height < canvas.height) man.y += man.speed;
+}
 
-  // Ghost player properties
-  const ghost = {
-    x: 50,
-    y: 0,
-    width: 80,
-    height: 80,
-    speed: 5,
-    vx: 0,
-    vy: 0,
-    frame: 0,
-    frameTick: 0,
-    maxFrames: 4,
-    frameWidth: 64,
-    frameHeight: 64,
-  };
+function moveGhost() {
+  // Simple chase logic with smoothing
+  const dx = man.x - ghost.x;
+  const dy = man.y - ghost.y;
+  const dist = Math.sqrt(dx * dx + dy * dy);
 
-  // Enemies array
-  const enemies = [];
-  // Power-ups array
-  const powerUps = [];
-
-  // Particles for effects
-  const particles = [];
-
-  // Spawn timer
-  let lastTimestamp = 0;
-  let spawnTimer = 0;
-  let spawnInterval = 1500;
-
-  // Touch controls flags
-  let touchLeftActive = false;
-  let touchRightActive = false;
-
-  // Helpers
-  function rectCollision(a, b) {
-    return a.x < b.x + b.width &&
-           a.x + a.width > b.x &&
-           a.y < b.y + b.height &&
-           a.y + a.height > b.y;
+  if (dist > 1) {
+    ghost.x += (dx / dist) * ghost.speed;
+    ghost.y += (dy / dist) * ghost.speed;
   }
+}
 
-  // Draw ghost sprite frame
-  function drawGhost() {
-    ctx.drawImage(
-      ghostSprite,
-      ghost.frame * ghost.frameWidth, 0,
-      ghost.frameWidth, ghost.frameHeight,
-      ghost.x, ghost.y,
-      ghost.width, ghost.height
-    );
-  }
+function checkCollision(a, b) {
+  return !(
+    b.x > a.x + a.width ||
+    b.x + b.width < a.x ||
+    b.y > a.y + a.height ||
+    b.y + b.height < a.y
+  );
+}
 
-  // Draw enemy sprite frame (frame cycles like ghost)
-  function drawEnemy(enemy) {
-    const frame = Math.floor(enemy.frame);
-    ctx.drawImage(
-      enemySprite,
-      frame * enemy.frameWidth, 0,
-      enemy.frameWidth, enemy.frameHeight,
-      enemy.x, enemy.y,
-      enemy.width, enemy.height
-    );
-  }
+function update() {
+  if (gameOver || win) return;
 
-  // Draw power-ups (simple circles with emoji)
-  function drawPowerUp(pu) {
-    ctx.save();
-    ctx.beginPath();
-    ctx.shadowColor = pu.color;
-    ctx.shadowBlur = 15;
-    ctx.fillStyle = pu.color;
-    ctx.arc(pu.x + pu.size/2, pu.y + pu.size/2, pu.size/2, 0, 2 * Math.PI);
-    ctx.fill();
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = '#fff';
-    ctx.font = `${pu.size * 0.8}px serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(pu.icon, pu.x + pu.size/2, pu.y + pu.size/2);
-    ctx.restore();
-  }
+  moveMan();
+  moveGhost();
 
-  // Create particle effect
-  function createParticles(x, y, color) {
-    for (let i=0; i<15; i++) {
-      particles.push({
-        x: x + Math.random() * 20 - 10,
-        y: y + Math.random() * 20 - 10,
-        vx: (Math.random() - 0.5) * 3,
-        vy: (Math.random() - 0.5) * 3,
-        alpha: 1,
-        size: 3 + Math.random()*3,
-        color
-      });
-    }
+  if (checkCollision(man, ghost)) {
+    gameOver = true;
   }
 
-  // Update particles
-  function updateParticles() {
-    for (let i = particles.length -1; i >= 0; i--) {
-      const p = particles[i];
-      p.x += p.vx;
-      p.y += p.vy;
-      p.alpha -= 0.03;
-      if (p.alpha <= 0) particles.splice(i, 1);
-    }
+  if (
+    man.x + man.width > escapeZone.x &&
+    man.x < escapeZone.x + escapeZone.width &&
+    man.y + man.height > escapeZone.y &&
+    man.y < escapeZone.y + escapeZone.height
+  ) {
+    win = true;
   }
+}
 
-  // Draw particles
-  function drawParticles() {
-    for (const p of particles) {
-      ctx.save();
-      ctx.globalAlpha = p.alpha;
-      ctx.fillStyle = p.color;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-  }
+function drawGameOver() {
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = 'red';
+  ctx.font = '60px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('Caught by the Ghost!', canvas.width / 2, canvas.height / 2);
+  ctx.font = '24px Arial';
+  ctx.fillText('Refresh to play again', canvas.width / 2, canvas.height / 2 + 50);
+}
 
-  // Spawn enemy
-  function spawnEnemy() {
-    const size = 60;
-    const y = Math.random() * (canvas.height - size);
-    enemies.push({
-      x: canvas.width,
-      y,
-      width: size,
-      height: size,
-      speed: 3 + Math.random() * 2,
-      frame: 0,
-      frameWidth: 64,
-      frameHeight: 64,
-      maxFrames: 4
-    });
-  }
+function drawWin() {
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#0f0';
+  ctx.font = '60px Arial';
+  ctx.textAlign = 'center';
+  ctx.fillText('You Escaped!', canvas.width / 2, canvas.height / 2);
+  ctx.font = '24px Arial';
+  ctx.fillText('Refresh to play again', canvas.width / 2, canvas.height / 2 + 50);
+}
 
-  // Spawn power-up
-  function spawnPowerUp() {
-    const size = 50;
-    const y = Math.random() * (canvas.height - size);
-    // Types: shield, speed, invisibility
-    const types = [
-      {icon: '🛡️', color: '#00ffff', type: 'shield'},
-      {icon: '⚡', color: '#ffea00', type: 'speed'},
-      {icon: '👻', color: '#ffffff', type: 'invisible'}
-    ];
-    const chosen = types[Math.floor(Math.random()*types.length)];
-    powerUps.push({
-      x: canvas.width,
-      y,
-      size,
-      icon: chosen.icon,
-      color: chosen.color,
-      type: chosen.type,
-      speed: 2.5
-    });
-  }
+function draw() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Handle power-up effects
-  let powerUpState = {
-    shield: false,
-    speedBoost: false,
-    invisible: false,
-    timer: 0
-  };
+  // Background is set by CSS
 
-  function applyPowerUp(type) {
-    sounds.powerup.currentTime = 0;
-    sounds.powerup.play();
-    createParticles(ghost.x + ghost.width/2, ghost.y + ghost.height/2, '#aaffff');
-    powerUpState.timer = 600; // last for 10 seconds approx (60 FPS * 10)
-    switch(type) {
-      case 'shield':
-        powerUpState.shield = true;
-        break;
-      case 'speed':
-        powerUpState.speedBoost = true;
-        break;
-      case 'invisible':
-        powerUpState.invisible = true;
-        break;
-    }
-  }
+  drawEscapeZone();
+  drawMan();
+  drawGhost();
 
-  // Update power-ups timer
-  function updatePowerUps() {
-    if (powerUpState.timer > 0) {
-      powerUpState.timer--;
-      if (powerUpState.timer === 0) {
-        powerUpState.shield = false;
-        powerUpState.speedBoost = false;
-        powerUpState.invisible = false;
-      }
-    }
-  }
+  if (gameOver) drawGameOver();
+  if (win) drawWin();
+}
 
-  // Handle keyboard controls
-  window.addEventListener('keydown', e => {
-    keys[e.key.toLowerCase()] = true;
-  });
-  window.addEventListener('keyup', e => {
-    keys[e.key.toLowerCase()] = false;
-  });
+function gameLoop() {
+  update();
+  draw();
+  requestAnimationFrame(gameLoop);
+}
 
-  // Touch controls handlers
-  btnLeft.addEventListener('touchstart', e => { e.preventDefault(); touchLeftActive = true; });
-  btnLeft.addEventListener('touchend', e => { e.preventDefault(); touchLeftActive = false; });
-  btnRight.addEventListener('touchstart', e => { e.preventDefault(); touchRightActive = true; });
-  btnRight.addEventListener('touchend', e => { e.preventDefault(); touchRightActive = false; });
-
-  // Mute music toggle
-  muteBtn.addEventListener('click', () => {
-    musicMuted = !musicMuted;
-    sounds.music.muted = musicMuted;
-    muteBtn.textContent = musicMuted ? '🔈' : '🔊';
-  });
-
-  // Reset game
-  function resetGame() {
-    score = 0;
-    enemies.length = 0;
-    powerUps.length = 0;
-    particles.length = 0;
-    ghost.x = 50;
-    ghost.y = canvas.height/2 - ghost.height/2;
-    powerUpState = {shield:false,speedBoost:false,invisible:false,timer:0};
-    spawnTimer = 0;
-  }
-
-  // Game loop
-  function gameLoop(timestamp) {
-    if (!gameRunning) return;
-
-    const delta = timestamp - lastTimestamp;
-    lastTimestamp = timestamp;
-    spawnTimer += delta;
-
-    // Clear canvas with a slight transparent fill for a glow effect
-    ctx.fillStyle = 'rgba(20, 30, 50, 0.4)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    // Update ghost position
-    let moveSpeed = ghost.speed;
-    if (powerUpState.speedBoost) moveSpeed *= 1.8;
-
-    ghost.vx = 0;
-    ghost.vy = 0;
-
-    // Keyboard or touch input
-    if (keys['arrowup'] || keys['w']) ghost.vy = -moveSpeed;
-    if (keys['arrowdown'] || keys['s']) ghost.vy = moveSpeed;
-    if (keys['arrowleft'] || keys['a'] || touchLeftActive) ghost.vx = -moveSpeed;
-    if (keys['arrowright'] || keys['d'] || touchRightActive) ghost.vx = moveSpeed;
-
-    ghost.x += ghost.vx;
-    ghost.y += ghost.vy;
-
-    // Boundaries
-    if (ghost.x < 0) ghost.x = 0;
-    if (ghost.y < 0) ghost.y = 0;
-    if (ghost.x + ghost.width > canvas.width) ghost.x = canvas.width - ghost.width;
-    if (ghost.y + ghost.height > canvas.height) ghost.y = canvas.height - ghost.height;
-
-    // Animate ghost sprite frames
-    ghost.frameTick++;
-    if (ghost.frameTick > 10) {
-      ghost.frameTick = 0;
-      ghost.frame = (ghost.frame + 1) % ghost.maxFrames;
-    }
-
-    // Spawn enemies and power-ups
-    if (spawnTimer > spawnInterval) {
-      spawnTimer = 0;
-      if (Math.random() < 0.7) {
-        spawnEnemy();
-      } else {
-        spawnPowerUp();
-      }
-      // Make it progressively harder
-      if (spawnInterval > 600) spawnInterval -= 20;
-    }
-
-    // Update enemies
-    for (let i = enemies.length -1; i >= 0; i--) {
-      const e = enemies[i];
-      e.x -= e.speed;
-      e.frame += 0.15;
-      if (e.frame >= e.maxFrames) e.frame = 0;
-
-      if (e.x + e.width < 0) {
-        enemies.splice(i, 1);
-        score += 1; // score for dodging enemies
-        continue;
-      }
-
-      // Collision with ghost
-      if (!powerUpState.invisible && rectCollision(ghost, e)) {
-        if (powerUpState.shield) {
-          // Shield blocks damage once
-          powerUpState.shield = false;
-          enemies.splice(i, 1);
-          sounds.hit.currentTime = 0;
-          sounds.hit.play();
-          createParticles(e.x + e.width/2, e.y + e.height/2, '#ff4444');
-          score += 3;
-        } else {
-          // Game over
-          sounds.hit.currentTime = 0;
-          sounds.hit.play();
-          gameRunning = false;
-          startOverlay.innerHTML = `<div>Game Over! Final Score: ${score}</div><button id="start-btn">Restart</button>`;
-          startOverlay.style.display = 'flex';
-          document.getElementById('start-btn').addEventListener('click', () => {
-            resetGame();
-            startOverlay.style.display = 'none';
-            gameRunning = true;
-            sounds.music.play();
-            lastTimestamp = performance.now();
-            requestAnimationFrame(gameLoop);
-          });
-        }
-      }
-    }
-
-    // Update power-ups
-    for (let i = powerUps.length -1; i >= 0; i--) {
-      const pu = powerUps[i];
-      pu.x -= pu.speed;
-      if (pu.x + pu.size < 0) {
-        powerUps.splice(i, 1);
-        continue;
-      }
-      // Collision with ghost
-      if (rectCollision(ghost, pu)) {
-        applyPowerUp(pu.type);
-        powerUps.splice(i, 1);
-        score += 5;
-      }
-    }
-
-    updatePowerUps();
-
-    // Draw ghost with glow if shield
-    if (powerUpState.shield) {
-      ctx.shadowColor = '#00ffff';
-      ctx.shadowBlur = 20;
-    } else {
-      ctx.shadowBlur = 0;
-    }
-    if (!powerUpState.invisible) {
-      drawGhost();
-    }
-
-    ctx.shadowBlur = 0;
-
-    // Draw enemies
-    enemies.forEach(drawEnemy);
-
-    // Draw power-ups
-    powerUps.forEach(drawPowerUp);
-
-    // Draw particles
-    drawParticles();
-    updateParticles();
-
-    // Draw score
-    scoreboard.textContent = `Score: ${score}`;
-
-    requestAnimationFrame(gameLoop);
-  }
-
-  // Start button handler
-  startBtn.addEventListener('click', () => {
-    resetGame();
-    startOverlay.style.display = 'none';
-    gameRunning = true;
-    sounds.music.play();
-    lastTimestamp = performance.now();
-    requestAnimationFrame(gameLoop);
-  });
-
-})();
+gameLoop();
 </script>
-
 </body>
 </html>
