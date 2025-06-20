@@ -2,18 +2,52 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
   <title>Realistic Ghost Chase - Three.js</title>
   <style>
-    body { margin: 0; overflow: hidden; background-color: #121212; }
+    /* Make body and html take full screen with no overflow */
+    html, body {
+      margin: 0; padding: 0; height: 100%; width: 100%;
+      overflow: hidden;
+      background-color: #121212;
+      font-family: Arial, sans-serif;
+    }
+
+    /* Make canvas fill entire window */
+    canvas {
+      display: block;  /* removes bottom whitespace */
+      width: 100vw !important;
+      height: 100vh !important;
+      touch-action: none; /* disable default touch behaviors */
+      user-select: none;
+    }
+
+    /* Info text styling */
     #info {
-      position: absolute; top: 10px; width: 100%; text-align: center;
-      color: white; font-family: Arial, sans-serif; font-size: 18px;
-      user-select: none; z-index: 1;
+      position: absolute; 
+      top: 10px; 
+      width: 100%; 
+      text-align: center;
+      color: white; 
+      font-size: 1.2rem;
+      user-select: none; 
+      z-index: 1;
+      padding: 0 10px;
+      box-sizing: border-box;
+    }
+
+    /* Smaller font size on small screens */
+    @media (max-width: 600px) {
+      #info {
+        font-size: 1rem;
+        top: 5px;
+      }
     }
   </style>
 </head>
 <body>
   <div id="info">Use WASD / Arrow Keys to move the human. Escape the glowing ghost!</div>
+
   <script src="https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.155.0/examples/js/loaders/GLTFLoader.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.155.0/examples/js/controls/OrbitControls.js"></script>
@@ -54,9 +88,6 @@
     ground.receiveShadow = true;
     scene.add(ground);
 
-    // Controls (for debug, optional)
-    // const controls = new THREE.OrbitControls(camera, renderer.domElement);
-
     // Loaders
     const loader = new THREE.GLTFLoader();
 
@@ -67,11 +98,8 @@
     // Movement parameters
     const move = { forward: false, backward: false, left: false, right: false };
     const walkSpeed = 2.5;
-    const runSpeed = 5;
 
     // Load Human Model with animations (Mixamo)
-    // Model URL (GLTF + animations) from a public source
-    // Note: This is a generic adult male model with walk/run/idle animations combined
     loader.load('https://threejs.org/examples/models/gltf/Xbot.glb', gltf => {
       human = gltf.scene;
       human.traverse(function(child){
@@ -87,12 +115,10 @@
 
       mixer = new THREE.AnimationMixer(human);
 
-      // Extract animations by name
       gltf.animations.forEach((clip) => {
         actions[clip.name] = mixer.clipAction(clip);
       });
 
-      // Play idle initially
       activeAction = actions['Idle'] || actions[Object.keys(actions)[0]];
       activeAction.play();
 
@@ -122,7 +148,6 @@
 
     // Player position & velocity
     const playerPosition = new THREE.Vector3();
-    const playerVelocity = new THREE.Vector3();
 
     // Ghost AI speed
     const ghostSpeed = 1.5;
@@ -204,9 +229,8 @@
       }
 
       // Move human
-      const speed = walkSpeed;
-      human.position.x += direction.x * speed * delta;
-      human.position.z += direction.z * speed * delta;
+      human.position.x += direction.x * walkSpeed * delta;
+      human.position.z += direction.z * walkSpeed * delta;
 
       // Rotate human to movement direction
       if (direction.length() > 0) {
@@ -228,7 +252,7 @@
         ghostDir.normalize();
         ghost.position.addScaledVector(ghostDir, ghostSpeed * delta);
         ghostLight.position.copy(ghost.position);
-      } else {
+      } else if (!gameOver) {
         gameOver = true;
         alert('The ghost caught you! Refresh to try again.');
       }
