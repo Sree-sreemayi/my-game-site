@@ -14,9 +14,9 @@
   canvas {
     display: block;
     margin: auto;
-    background: url('https://i.imgur.com/guTf18W.jpg') no-repeat center center/cover;
     border: 3px solid white;
-    box-shadow: 0 0 30px #00fff7;
+    box-shadow: 0 0 40px #00fff7;
+    background: url('https://cdn.pixabay.com/photo/2017/10/31/23/22/haunted-house-2904878_1280.jpg') no-repeat center center/cover;
   }
   #info {
     text-align: center;
@@ -24,35 +24,42 @@
     margin-top: 10px;
     font-size: 20px;
     letter-spacing: 0.05em;
+    user-select: none;
   }
 </style>
 </head>
 <body>
-<canvas id="gameCanvas" width="800" height="500"></canvas>
+<canvas id="gameCanvas" width="900" height="600"></canvas>
 <div id="info">Use Arrow Keys to move the man. Escape the ghost!</div>
 
 <script>
-// Get canvas context
+// Canvas & context
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
-// Game variables
+// Load images
+const manImg = new Image();
+manImg.src = 'https://i.imgur.com/MD1rc4X.png';  // transparent human sprite PNG
+const ghostImg = new Image();
+ghostImg.src = 'https://i.imgur.com/fqTyL8B.png';  // transparent ghost sprite PNG
+
+// Game objects
 const man = {
   x: 100,
-  y: 400,
-  width: 40,
-  height: 60,
-  speed: 4,
-  color: '#FFD700'
+  y: 500,
+  width: 50,
+  height: 70,
+  speed: 5,
+  image: manImg
 };
 
 const ghost = {
-  x: 700,
-  y: 100,
-  width: 50,
-  height: 60,
-  speed: 2,
-  color: '#AAFFFC',
+  x: 750,
+  y: 150,
+  width: 60,
+  height: 90,
+  speed: 2.5,
+  image: ghostImg,
   bobbing: 0,
   bobbingDirection: 1
 };
@@ -60,7 +67,7 @@ const ghost = {
 let keys = {};
 let gameOver = false;
 let win = false;
-const escapeZone = {x: 750, y: 450, width: 50, height: 50};
+const escapeZone = {x: 850, y: 550, width: 40, height: 40};
 
 // Controls
 window.addEventListener('keydown', e => {
@@ -70,58 +77,27 @@ window.addEventListener('keyup', e => {
   keys[e.key] = false;
 });
 
-// Utility functions
+// Draw functions
 function drawMan() {
-  ctx.fillStyle = man.color;
-  // Draw simple man as a rectangle with a head circle
-  ctx.fillRect(man.x, man.y, man.width, man.height);
-  ctx.beginPath();
-  ctx.arc(man.x + man.width / 2, man.y, man.width / 2, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.drawImage(man.image, man.x, man.y, man.width, man.height);
 }
 
 function drawGhost() {
-  // Bobbing animation for ghost
-  ghost.bobbing += ghost.bobbingDirection * 0.05;
-  if (ghost.bobbing > 5 || ghost.bobbing < -5) ghost.bobbingDirection *= -1;
-
-  ctx.fillStyle = ghost.color;
-  ctx.beginPath();
-  // Ghost body shape (semi-circle + waves)
-  ctx.moveTo(ghost.x, ghost.y + ghost.height + ghost.bobbing);
-  ctx.quadraticCurveTo(ghost.x + ghost.width / 2, ghost.y - 20 + ghost.bobbing, ghost.x + ghost.width, ghost.y + ghost.height + ghost.bobbing);
-  // Bottom waves
-  const waveCount = 5;
-  const waveWidth = ghost.width / waveCount;
-  for (let i = 0; i < waveCount; i++) {
-    let startX = ghost.x + i * waveWidth;
-    ctx.lineTo(startX + waveWidth / 2, ghost.y + ghost.height + 10 + (i % 2 === 0 ? 5 : 0) + ghost.bobbing);
-  }
-  ctx.closePath();
-  ctx.fill();
-
-  // Ghost eyes
-  ctx.fillStyle = '#000';
-  ctx.beginPath();
-  ctx.ellipse(ghost.x + ghost.width / 3, ghost.y + 20 + ghost.bobbing, 7, 10, 0, 0, Math.PI * 2);
-  ctx.ellipse(ghost.x + 2 * ghost.width / 3, ghost.y + 20 + ghost.bobbing, 7, 10, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = '#FFF';
-  ctx.beginPath();
-  ctx.ellipse(ghost.x + ghost.width / 3 - 3, ghost.y + 18 + ghost.bobbing, 3, 5, 0, 0, Math.PI * 2);
-  ctx.ellipse(ghost.x + 2 * ghost.width / 3 - 3, ghost.y + 18 + ghost.bobbing, 3, 5, 0, 0, Math.PI * 2);
-  ctx.fill();
+  // Bobbing animation
+  ghost.bobbing += ghost.bobbingDirection * 0.1;
+  if (ghost.bobbing > 8 || ghost.bobbing < -8) ghost.bobbingDirection *= -1;
+  ctx.drawImage(ghost.image, ghost.x, ghost.y + ghost.bobbing, ghost.width, ghost.height);
 }
 
 function drawEscapeZone() {
-  ctx.fillStyle = 'rgba(0,255,0,0.3)';
+  ctx.fillStyle = 'rgba(0,255,0,0.25)';
   ctx.fillRect(escapeZone.x, escapeZone.y, escapeZone.width, escapeZone.height);
   ctx.strokeStyle = 'lime';
+  ctx.lineWidth = 3;
   ctx.strokeRect(escapeZone.x, escapeZone.y, escapeZone.width, escapeZone.height);
   ctx.fillStyle = 'lime';
-  ctx.font = '16px Arial';
-  ctx.fillText('Escape Here', escapeZone.x - 10, escapeZone.y - 10);
+  ctx.font = '18px Arial';
+  ctx.fillText('Escape Here', escapeZone.x - 70, escapeZone.y + escapeZone.height - 5);
 }
 
 function moveMan() {
@@ -132,7 +108,6 @@ function moveMan() {
 }
 
 function moveGhost() {
-  // Simple chase logic with smoothing
   const dx = man.x - ghost.x;
   const dy = man.y - ghost.y;
   const dist = Math.sqrt(dx * dx + dy * dy);
@@ -173,31 +148,29 @@ function update() {
 }
 
 function drawGameOver() {
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = 'red';
-  ctx.font = '60px Arial';
+  ctx.font = '70px Arial';
   ctx.textAlign = 'center';
   ctx.fillText('Caught by the Ghost!', canvas.width / 2, canvas.height / 2);
-  ctx.font = '24px Arial';
-  ctx.fillText('Refresh to play again', canvas.width / 2, canvas.height / 2 + 50);
+  ctx.font = '30px Arial';
+  ctx.fillText('Refresh to play again', canvas.width / 2, canvas.height / 2 + 60);
 }
 
 function drawWin() {
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.fillStyle = '#0f0';
-  ctx.font = '60px Arial';
+  ctx.font = '70px Arial';
   ctx.textAlign = 'center';
   ctx.fillText('You Escaped!', canvas.width / 2, canvas.height / 2);
-  ctx.font = '24px Arial';
-  ctx.fillText('Refresh to play again', canvas.width / 2, canvas.height / 2 + 50);
+  ctx.font = '30px Arial';
+  ctx.fillText('Refresh to play again', canvas.width / 2, canvas.height / 2 + 60);
 }
 
 function draw() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // Background is set by CSS
 
   drawEscapeZone();
   drawMan();
@@ -213,7 +186,17 @@ function gameLoop() {
   requestAnimationFrame(gameLoop);
 }
 
-gameLoop();
+// Start game only after images load
+let loaded = 0;
+[manImg, ghostImg].forEach(img => {
+  img.onload = () => {
+    loaded++;
+    if (loaded === 2) {
+      gameLoop();
+    }
+  };
+});
 </script>
 </body>
 </html>
+
