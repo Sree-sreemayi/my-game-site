@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Epic Game Hub</title>
   <style>
-    /* Reset & base */
     * {
       box-sizing: border-box;
     }
@@ -22,7 +21,6 @@
       overflow-x: hidden;
     }
 
-    /* Header */
     header {
       padding: 2rem 1rem;
       text-align: center;
@@ -36,7 +34,6 @@
       text-shadow: 0 0 10px #72e0ff;
     }
 
-    /* Main container */
     main {
       flex: 1;
       display: flex;
@@ -46,7 +43,6 @@
       position: relative;
     }
 
-    /* Game container */
     #game-container {
       background: #222;
       border-radius: 16px;
@@ -64,7 +60,6 @@
       flex-direction: column;
     }
 
-    /* Start button */
     #start-btn {
       background: #00fff7;
       color: #111;
@@ -84,7 +79,6 @@
       box-shadow: 0 6px 25px rgba(0,214,204,0.9);
     }
 
-    /* Game canvas placeholder */
     #game-canvas {
       background: #111;
       width: 100%;
@@ -94,7 +88,6 @@
       display: none;
     }
 
-    /* Footer */
     footer {
       text-align: center;
       padding: 1rem;
@@ -104,7 +97,6 @@
       user-select: none;
     }
 
-    /* Responsive */
     @media (max-width: 600px) {
       header {
         font-size: 1.8rem;
@@ -145,7 +137,57 @@
     const gameCanvas = document.getElementById('game-canvas');
     const ctx = gameCanvas.getContext('2d');
 
-    // Resize canvas to container size
+    // Resize canvas to match container size
     function resizeCanvas() {
-      gameCanvas.width
+      const container = document.getElementById('game-container');
+      gameCanvas.width = container.clientWidth;
+      gameCanvas.height = container.clientHeight;
+    }
 
+    window.addEventListener('resize', resizeCanvas);
+
+    // Ball object
+    let ball = {
+      x: 100,
+      y: 100,
+      radius: 20,
+      dx: 4,
+      dy: 3,
+      color: '#00fff7'
+    };
+
+    function drawBall() {
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+      ctx.fillStyle = ball.color;
+      ctx.fill();
+      ctx.closePath();
+    }
+
+    function updateGame() {
+      ctx.clearRect(0, 0, gameCanvas.width, gameCanvas.height);
+      drawBall();
+
+      ball.x += ball.dx;
+      ball.y += ball.dy;
+
+      if (ball.x + ball.radius > gameCanvas.width || ball.x - ball.radius < 0) {
+        ball.dx *= -1;
+      }
+      if (ball.y + ball.radius > gameCanvas.height || ball.y - ball.radius < 0) {
+        ball.dy *= -1;
+      }
+
+      requestAnimationFrame(updateGame);
+    }
+
+    startBtn.addEventListener('click', () => {
+      resizeCanvas();
+      gameIntro.style.display = 'none';
+      gameCanvas.style.display = 'block';
+      updateGame();
+    });
+  </script>
+
+</body>
+</html>
