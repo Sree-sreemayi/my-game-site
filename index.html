@@ -4,6 +4,7 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Ghost House Chase Game</title>
+<meta name="description" content="Escape the ghost in the haunted house. Use arrow keys to move the man and avoid the ghost." />
 <style>
   body {
     margin: 0;
@@ -26,22 +27,63 @@
     letter-spacing: 0.05em;
     user-select: none;
   }
+  #loading {
+    color: white;
+    font-size: 24px;
+    text-align: center;
+    margin-top: 50px;
+    user-select: none;
+  }
 </style>
 </head>
 <body>
-<canvas id="gameCanvas" width="900" height="600"></canvas>
-<div id="info">Use Arrow Keys to move the man. Escape the ghost!</div>
+<div role="main" aria-label="Ghost chase game where player tries to escape ghost using arrow keys.">
+  <canvas id="gameCanvas" width="900" height="600" aria-describedby="info"></canvas>
+  <div id="info">Use Arrow Keys to move the man. Escape the ghost!</div>
+</div>
+<div id="loading">Loading...</div>
+
+<!-- Audio elements -->
+<audio id="bgMusic" loop src="https://cdn.pixabay.com/download/audio/2022/07/30/audio_2f98116d5c.mp3?filename=dark-ambient-11295.mp3" crossorigin="anonymous"></audio>
+<audio id="caughtSound" src="https://cdn.pixabay.com/download/audio/2022/03/03/audio_729f3b16d4.mp3?filename=creepy-magic-33255.mp3" crossorigin="anonymous"></audio>
+<audio id="winSound" src="https://cdn.pixabay.com/download/audio/2021/08/04/audio_59a5bc381a.mp3?filename=happy-winning-sound-6344.mp3" crossorigin="anonymous"></audio>
 
 <script>
 // Canvas & context
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 
+const loadingDiv = document.getElementById('loading');
+
 // Load images
 const manImg = new Image();
 manImg.src = 'https://i.imgur.com/MD1rc4X.png';  // transparent human sprite PNG
 const ghostImg = new Image();
 ghostImg.src = 'https://i.imgur.com/fqTyL8B.png';  // transparent ghost sprite PNG
+
+// Audio
+const bgMusic = document.getElementById('bgMusic');
+const caughtSound = document.getElementById('caughtSound');
+const winSound = document.getElementById('winSound');
+
+bgMusic.volume = 0.3;
+
+let loadedCount = 0;
+const assetsToLoad = 5; // 2 images + 3 audio
+
+function assetLoaded() {
+  loadedCount++;
+  if (loadedCount >= assetsToLoad) {
+    loadingDiv.style.display = 'none';
+    bgMusic.play();
+    gameLoop();
+  }
+}
+
+[manImg, ghostImg].forEach(img => img.onload = assetLoaded);
+[bgMusic, caughtSound, winSound].forEach(audio => {
+  audio.oncanplaythrough = assetLoaded;
+});
 
 // Game objects
 const man = {
@@ -79,14 +121,44 @@ window.addEventListener('keyup', e => {
 
 // Draw functions
 function drawMan() {
+  ctx.shadowColor = 'rgba(0,0,0,0.6)';
+  ctx.shadowBlur = 10;
+  ctx.shadowOffsetX = 2;
+  ctx.shadowOffsetY = 4;
   ctx.drawImage(man.image, man.x, man.y, man.width, man.height);
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
+}
+
+function drawGhostLight() {
+  const gradient = ctx.createRadialGradient(
+    ghost.x + ghost.width / 2,
+    ghost.y + ghost.height / 2 + ghost.bobbing,
+    10,
+    ghost.x + ghost.width / 2,
+    ghost.y + ghost.height / 2 + ghost.bobbing,
+    100
+  );
+  gradient.addColorStop(0, 'rgba(0,255,255,0.4)');
+  gradient.addColorStop(1, 'rgba(0,255,255,0)');
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.arc(ghost.x + ghost.width / 2, ghost.y + ghost.height / 2 + ghost.bobbing, 100, 0, Math.PI * 2);
+  ctx.fill();
 }
 
 function drawGhost() {
   // Bobbing animation
   ghost.bobbing += ghost.bobbingDirection * 0.1;
   if (ghost.bobbing > 8 || ghost.bobbing < -8) ghost.bobbingDirection *= -1;
+
+  ctx.shadowColor = 'rgba(0,255,255,0.7)';
+  ctx.shadowBlur = 20;
+  ctx.shadowOffsetX = 0;
+  ctx.shadowOffsetY = 0;
   ctx.drawImage(ghost.image, ghost.x, ghost.y + ghost.bobbing, ghost.width, ghost.height);
+  ctx.shadowBlur = 0;
 }
 
 function drawEscapeZone() {
@@ -135,6 +207,8 @@ function update() {
 
   if (checkCollision(man, ghost)) {
     gameOver = true;
+    caughtSound.play();
+    bgMusic.pause();
   }
 
   if (
@@ -144,29 +218,28 @@ function update() {
     man.y < escapeZone.y + escapeZone.height
   ) {
     win = true;
+    winSound.play();
+    bgMusic.pause();
   }
 }
 
-function drawGameOver() {
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+function drawOverlay(text, color) {
+  ctx.fillStyle = `rgba(0, 0, 0, 0.8)`;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = 'red';
+  ctx.fillStyle = color;
   ctx.font = '70px Arial';
   ctx.textAlign = 'center';
-  ctx.fillText('Caught by the Ghost!', canvas.width / 2, canvas.height / 2);
+  ctx.fillText(text, canvas.width / 2, canvas.height / 2);
   ctx.font = '30px Arial';
   ctx.fillText('Refresh to play again', canvas.width / 2, canvas.height / 2 + 60);
 }
 
+function drawGameOver() {
+  drawOverlay('Caught by the Ghost!', 'red');
+}
+
 function drawWin() {
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = '#0f0';
-  ctx.font = '70px Arial';
-  ctx.textAlign = 'center';
-  ctx.fillText('You Escaped!', canvas.width / 2, canvas.height / 2);
-  ctx.font = '30px Arial';
-  ctx.fillText('Refresh to play again', canvas.width / 2, canvas.height / 2 + 60);
+  drawOverlay('You Escaped!', '#0f0');
 }
 
 function draw() {
@@ -174,6 +247,7 @@ function draw() {
 
   drawEscapeZone();
   drawMan();
+  drawGhostLight();
   drawGhost();
 
   if (gameOver) drawGameOver();
@@ -185,18 +259,6 @@ function gameLoop() {
   draw();
   requestAnimationFrame(gameLoop);
 }
-
-// Start game only after images load
-let loaded = 0;
-[manImg, ghostImg].forEach(img => {
-  img.onload = () => {
-    loaded++;
-    if (loaded === 2) {
-      gameLoop();
-    }
-  };
-});
 </script>
 </body>
 </html>
-
