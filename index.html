@@ -1,42 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
-  <title>Realistic Ghost Chase - Three.js</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>Ghost Chase 2D with PixiJS</title>
   <style>
-    /* Make body and html take full screen with no overflow */
-    html, body {
-      margin: 0; padding: 0; height: 100%; width: 100%;
+    body, html {
+      margin: 0; padding: 0;
+      width: 100%; height: 100%;
       overflow: hidden;
-      background-color: #121212;
-      font-family: Arial, sans-serif;
+      background: #111;
     }
-
-    /* Make canvas fill entire window */
-    canvas {
-      display: block;  /* removes bottom whitespace */
-      width: 100vw !important;
-      height: 100vh !important;
-      touch-action: none; /* disable default touch behaviors */
-      user-select: none;
+    #game-canvas {
+      width: 100%; height: 100%;
+      display: block;
     }
-
-    /* Info text styling */
     #info {
-      position: absolute; 
-      top: 10px; 
-      width: 100%; 
-      text-align: center;
-      color: white; 
-      font-size: 1.2rem;
-      user-select: none; 
-      z-index: 1;
-      padding: 0 10px;
-      box-sizing: border-box;
+      position: absolute; top: 10px; width: 100%;
+      text-align: center; color: #fff;
+      font: 1.2rem Arial, sans-serif;
+      z-index: 10; pointer-events: none;
     }
-
-    /* Smaller font size on small screens */
     @media (max-width: 600px) {
       #info {
         font-size: 1rem;
@@ -46,231 +30,90 @@
   </style>
 </head>
 <body>
-  <div id="info">Use WASD / Arrow Keys to move the human. Escape the glowing ghost!</div>
-
-  <script src="https://cdn.jsdelivr.net/npm/three@0.155.0/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.155.0/examples/js/loaders/GLTFLoader.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.155.0/examples/js/controls/OrbitControls.js"></script>
-
+  <div id="info">Use WASD or Arrow keys / Tap on screen edges to move away from the ghost!</div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.2.4/pixi.min.js"></script>
   <script>
-    // Scene setup
-    const scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x121212, 0.06);
+    const app = new PIXI.Application({
+      resizeTo: window,
+      backgroundColor: 0x111111,
+    });
+    app.view.id = 'game-canvas';
+    document.body.appendChild(app.view);
 
-    const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 3, 8);
+    const loader = PIXI.Loader.shared;
+    loader
+      .add('man', 'https://i.imgur.com/4Nj0LNh.png') // Replace with real sprite URLs
+      .add('ghost', 'https://i.imgur.com/pqK6k4Q.png')
+      .load(setup);
 
-    const renderer = new THREE.WebGLRenderer({antialias: true});
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.shadowMap.enabled = true;
-    document.body.appendChild(renderer.domElement);
+    let man, ghost;
+    const speed = 200; // px/sec
+    const ghostSpeed = 100;
+    const keys = {};
 
-    // Lighting
-    const hemiLight = new THREE.HemisphereLight(0xffffff, 0x444444, 0.6);
-    hemiLight.position.set(0, 20, 0);
-    scene.add(hemiLight);
+    window.addEventListener('keydown', e => keys[e.code] = true);
+    window.addEventListener('keyup', e => keys[e.code] = false);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-    dirLight.position.set(5, 10, 7);
-    dirLight.castShadow = true;
-    dirLight.shadow.mapSize.width = 2048;
-    dirLight.shadow.mapSize.height = 2048;
-    dirLight.shadow.camera.left = -10;
-    dirLight.shadow.camera.right = 10;
-    dirLight.shadow.camera.top = 10;
-    dirLight.shadow.camera.bottom = -10;
-    scene.add(dirLight);
-
-    // Ground
-    const groundMat = new THREE.MeshStandardMaterial({color: 0x222222});
-    const ground = new THREE.Mesh(new THREE.PlaneGeometry(50, 50), groundMat);
-    ground.rotation.x = -Math.PI/2;
-    ground.receiveShadow = true;
-    scene.add(ground);
-
-    // Loaders
-    const loader = new THREE.GLTFLoader();
-
-    // Variables
-    let human, mixer, actions = {}, activeAction, previousAction;
-    let clock = new THREE.Clock();
-
-    // Movement parameters
-    const move = { forward: false, backward: false, left: false, right: false };
-    const walkSpeed = 2.5;
-
-    // Load Human Model with animations (Mixamo)
-    loader.load('https://threejs.org/examples/models/gltf/Xbot.glb', gltf => {
-      human = gltf.scene;
-      human.traverse(function(child){
-        if (child.isMesh) {
-          child.castShadow = true;
-          child.receiveShadow = true;
-        }
-      });
-
-      human.scale.set(0.01, 0.01, 0.01); // Scale down
-      human.position.set(0, 0, 0);
-      scene.add(human);
-
-      mixer = new THREE.AnimationMixer(human);
-
-      gltf.animations.forEach((clip) => {
-        actions[clip.name] = mixer.clipAction(clip);
-      });
-
-      activeAction = actions['Idle'] || actions[Object.keys(actions)[0]];
-      activeAction.play();
-
-      animate();
+    // For mobile: tap on edges
+    app.view.addEventListener('pointerdown', e => {
+      const x = e.clientX, w = app.renderer.width;
+      if (x < w * 0.3) keys.ArrowLeft = true;
+      else if (x > w * 0.7) keys.ArrowRight = true;
+      else keys.ArrowUp = true;
+    });
+    app.view.addEventListener('pointerup', () => {
+      keys.ArrowUp = keys.ArrowLeft = keys.ArrowRight = keys.ArrowDown = false;
     });
 
-    // Ghost: glowing transparent sphere with slight bobbing
-    const ghostMaterial = new THREE.MeshStandardMaterial({
-      color: 0x00ffff,
-      transparent: true,
-      opacity: 0.4,
-      emissive: 0x00ffff,
-      emissiveIntensity: 1,
-      roughness: 0.1,
-      metalness: 0.5
-    });
-    const ghostGeometry = new THREE.SphereGeometry(0.6, 32, 32);
-    const ghost = new THREE.Mesh(ghostGeometry, ghostMaterial);
-    ghost.position.set(5, 1, -5);
-    ghost.castShadow = true;
-    scene.add(ghost);
+    function setup() {
+      man = new PIXI.Sprite(loader.resources.man.texture);
+      ghost = new PIXI.Sprite(loader.resources.ghost.texture);
 
-    // Ghost light halo
-    const ghostLight = new THREE.PointLight(0x00ffff, 1, 6);
-    ghostLight.position.copy(ghost.position);
-    scene.add(ghostLight);
+      [man.width, man.height] = [64, 64];
+      [ghost.width, ghost.height] = [64, 64];
 
-    // Player position & velocity
-    const playerPosition = new THREE.Vector3();
+      man.anchor.set(0.5);
+      ghost.anchor.set(0.5);
 
-    // Ghost AI speed
-    const ghostSpeed = 1.5;
+      man.position.set(app.renderer.width / 2, app.renderer.height / 2);
+      ghost.position.set(app.renderer.width * 0.2, app.renderer.height * 0.2);
 
-    // Keyboard controls
-    window.addEventListener('keydown', e => {
-      switch (e.code) {
-        case 'ArrowUp':
-        case 'KeyW':
-          move.forward = true; break;
-        case 'ArrowDown':
-        case 'KeyS':
-          move.backward = true; break;
-        case 'ArrowLeft':
-        case 'KeyA':
-          move.left = true; break;
-        case 'ArrowRight':
-        case 'KeyD':
-          move.right = true; break;
-      }
-    });
-    window.addEventListener('keyup', e => {
-      switch (e.code) {
-        case 'ArrowUp':
-        case 'KeyW':
-          move.forward = false; break;
-        case 'ArrowDown':
-        case 'KeyS':
-          move.backward = false; break;
-        case 'ArrowLeft':
-        case 'KeyA':
-          move.left = false; break;
-        case 'ArrowRight':
-        case 'KeyD':
-          move.right = false; break;
-      }
-    });
-
-    // Helper function to switch animation smoothly
-    function fadeToAction(name, duration = 0.3) {
-      previousAction = activeAction;
-      activeAction = actions[name];
-      if (previousAction !== activeAction) {
-        previousAction.fadeOut(duration);
-        activeAction.reset().fadeIn(duration).play();
-      }
+      app.stage.addChild(man, ghost);
+      app.ticker.add(gameLoop);
     }
 
-    // Game state
-    let gameOver = false;
-    const escapeDistance = 2;
+    function gameLoop(delta) {
+      let moved = false;
+      const dt = delta / app.ticker.FPS;
 
-    // Game loop
-    function animate() {
-      requestAnimationFrame(animate);
+      if (keys.KeyW || keys.ArrowUp) {
+        man.y -= speed * dt; moved = true;
+      }
+      if (keys.KeyS || keys.ArrowDown) {
+        man.y += speed * dt; moved = true;
+      }
+      if (keys.KeyA || keys.ArrowLeft) {
+        man.x -= speed * dt; moved = true;
+      }
+      if (keys.KeyD || keys.ArrowRight) {
+        man.x += speed * dt; moved = true;
+      }
 
-      const delta = clock.getDelta();
-
-      if (mixer) mixer.update(delta);
-
-      if (!human || gameOver) {
-        renderer.render(scene, camera);
+      const dx = man.x - ghost.x, dy = man.y - ghost.y;
+      const d = Math.hypot(dx, dy);
+      if (d < 40) {
+        app.ticker.stop();
+        alert('👻 Caught by the ghost! Reload to play again.');
         return;
       }
 
-      // Movement vector
-      let direction = new THREE.Vector3();
-      if (move.forward) direction.z -= 1;
-      if (move.backward) direction.z += 1;
-      if (move.left) direction.x -= 1;
-      if (move.right) direction.x += 1;
-      direction.normalize();
+      const nx = dx / d, ny = dy / d;
+      ghost.x += nx * ghostSpeed * dt;
+      ghost.y += ny * ghostSpeed * dt;
 
-      // Set animation & speed based on input
-      if (direction.length() === 0) {
-        fadeToAction('Idle');
-      } else {
-        fadeToAction('Walk');
-      }
-
-      // Move human
-      human.position.x += direction.x * walkSpeed * delta;
-      human.position.z += direction.z * walkSpeed * delta;
-
-      // Rotate human to movement direction
-      if (direction.length() > 0) {
-        const angle = Math.atan2(direction.x, direction.z);
-        human.rotation.y = angle;
-      }
-
-      // Update player position vector for ghost AI
-      playerPosition.copy(human.position);
-
-      // Ghost bobbing
-      ghost.position.y = 1 + Math.sin(Date.now() * 0.003) * 0.2;
-
-      // Ghost moves towards player
-      let ghostDir = new THREE.Vector3().subVectors(playerPosition, ghost.position);
-      const dist = ghostDir.length();
-
-      if (dist > escapeDistance) {
-        ghostDir.normalize();
-        ghost.position.addScaledVector(ghostDir, ghostSpeed * delta);
-        ghostLight.position.copy(ghost.position);
-      } else if (!gameOver) {
-        gameOver = true;
-        alert('The ghost caught you! Refresh to try again.');
-      }
-
-      // Camera follows human with smooth lag
-      const camTargetPos = new THREE.Vector3(human.position.x, human.position.y + 2, human.position.z + 6);
-      camera.position.lerp(camTargetPos, 0.05);
-      camera.lookAt(human.position.x, human.position.y + 1, human.position.z);
-
-      renderer.render(scene, camera);
+      man.x = Math.max(32, Math.min(app.renderer.width - 32, man.x));
+      man.y = Math.max(32, Math.min(app.renderer.height - 32, man.y));
     }
-
-    // Handle window resizing
-    window.addEventListener('resize', () => {
-      camera.aspect = window.innerWidth/window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
   </script>
 </body>
 </html>
