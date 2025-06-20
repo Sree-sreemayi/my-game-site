@@ -3,25 +3,20 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Responsive Epic Car Dodge</title>
+<title>Responsive Car Dodge (Working Demo)</title>
 <style>
-  /* Reset & base */
-  * {
-    box-sizing: border-box;
-  }
-  body, html {
-    margin: 0; padding: 0;
-    font-family: 'Poppins', sans-serif;
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    font-family: sans-serif;
     background: linear-gradient(to bottom, #0f2027, #203a43, #2c5364);
     color: white;
-    height: 100%;
     display: flex;
     flex-direction: column;
   }
   header, footer {
     text-align: center;
     padding: 1rem;
-    background: rgba(0, 0, 0, 0.3);
+    background: rgba(0,0,0,0.3);
     user-select: none;
   }
   main {
@@ -35,7 +30,7 @@
     position: relative;
     width: 100%;
     max-width: 480px;
-    aspect-ratio: 3 / 4; /* keeps a nice height */
+    aspect-ratio: 3 / 4;
     background: #222;
     border-radius: 12px;
     overflow: hidden;
@@ -45,8 +40,8 @@
     width: 100%;
     height: 100%;
     display: none;
-    background: #333;
     border-radius: 12px;
+    background: #333;
   }
   #score {
     position: absolute;
@@ -55,21 +50,21 @@
     background: rgba(0,0,0,0.5);
     padding: 6px 12px;
     border-radius: 8px;
-    font-size: 1.1rem;
+    font-size: 1.2rem;
     user-select: none;
     z-index: 2;
   }
   #overlay {
     position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0,0,0,0.7);
+    top:0; left:0;
+    width:100%; height:100%;
+    background: rgba(0,0,0,0.8);
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 3;
     color: #00fff7;
+    z-index: 3;
     user-select: none;
   }
   button {
@@ -88,17 +83,11 @@
   button:hover {
     background: #00d6cc;
   }
-  @media (max-width: 400px) {
-    button {
-      font-size: 1rem;
-      padding: 0.6rem 1.5rem;
-    }
-  }
 </style>
 </head>
 <body>
 
-<header>Epic Car Dodge</header>
+<header>Responsive Car Dodge</header>
 <main>
   <div id="game-container">
     <canvas id="game-canvas"></canvas>
@@ -111,15 +100,7 @@
 </main>
 <footer>© 2025 Epic Game Hub</footer>
 
-<!-- Hidden assets -->
-<img id="carSprite" src="car_sprites.png" alt="Car Sprite" hidden />
-<audio id="engineSound" src="engine-rev.mp3" preload="auto"></audio>
-<audio id="collisionSound" src="collision.mp3" preload="auto"></audio>
-<audio id="shieldSound" src="powerup-shield.mp3" preload="auto"></audio>
-<audio id="boostSound" src="powerup-speed.mp3" preload="auto"></audio>
-
 <script>
-  // Get elements
   const canvas = document.getElementById('game-canvas');
   const ctx = canvas.getContext('2d');
   const container = document.getElementById('game-container');
@@ -127,33 +108,24 @@
   const startBtn = document.getElementById('start-btn');
   const scoreEl = document.getElementById('score');
 
-  const carImg = document.getElementById('carSprite');
-  const engineSound = document.getElementById('engineSound');
-  const collisionSound = document.getElementById('collisionSound');
-  const shieldSound = document.getElementById('shieldSound');
-  const boostSound = document.getElementById('boostSound');
-
-  // Game variables
   let car, obstacles, powerUps;
   let keys = {};
   let score = 0;
   let speed = 3;
   let gameOver = false;
   let frameCount = 0;
-  let currentFrame = 1; // sprite frame: 0=left,1=straight,2=right
   let shieldActive = false;
   let boostActive = false;
   let boostTimer = 0;
 
-  // Responsive canvas sizing
   function resizeCanvas() {
     canvas.width = container.clientWidth;
     canvas.height = container.clientHeight;
   }
+
   window.addEventListener('resize', () => {
     resizeCanvas();
     if(car) {
-      // Adjust car width/height relative to new canvas size
       car.w = canvas.width * 0.2;
       car.h = canvas.height * 0.1;
       car.speed = canvas.width / 80;
@@ -162,13 +134,11 @@
     }
   });
 
-  // Reset game state
   function reset() {
     score = 0;
     speed = 3;
     gameOver = false;
     frameCount = 0;
-    currentFrame = 1;
     shieldActive = false;
     boostActive = false;
     boostTimer = 0;
@@ -179,6 +149,7 @@
       x: canvas.width / 2 - (canvas.width * 0.1),
       y: canvas.height * 0.8,
       speed: canvas.width / 80,
+      color: '#00fff7',
     };
 
     obstacles = [];
@@ -187,7 +158,6 @@
     scoreEl.textContent = `Score: ${score}`;
   }
 
-  // Spawn obstacles randomly
   function spawnObstacle() {
     const w = canvas.width * 0.2;
     const h = w * 1.2;
@@ -200,7 +170,6 @@
     });
   }
 
-  // Spawn power-ups randomly
   function spawnPowerUp() {
     const size = 30;
     const type = Math.random() < 0.5 ? 'shield' : 'boost';
@@ -212,13 +181,10 @@
     });
   }
 
-  // Draw background gradient stripes for road
   function drawBackground() {
-    // Clear bg
     ctx.fillStyle = '#2d2d2d';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Road lanes stripes
     const stripeWidth = canvas.width / 15;
     ctx.fillStyle = '#555';
     for(let i = 0; i < canvas.width; i += stripeWidth * 2) {
@@ -226,16 +192,10 @@
     }
   }
 
-  // Draw animated car sprite
   function drawCar() {
-    const spriteWidth = 128;
-    const spriteHeight = 128;
-    const sx = currentFrame * spriteWidth;
-    const sy = 0;
+    ctx.fillStyle = car.color;
+    ctx.fillRect(car.x, car.y, car.w, car.h);
 
-    ctx.drawImage(carImg, sx, sy, spriteWidth, spriteHeight, car.x, car.y, car.w, car.h);
-
-    // If shield active, draw glowing circle
     if(shieldActive) {
       ctx.strokeStyle = '#00ffff88';
       ctx.lineWidth = 5;
@@ -245,7 +205,6 @@
     }
   }
 
-  // Draw obstacles (red rectangles)
   function drawObstacles() {
     ctx.fillStyle = '#ff5555';
     obstacles.forEach(o => {
@@ -253,7 +212,6 @@
     });
   }
 
-  // Draw power-ups as colored circles
   function drawPowerUps() {
     powerUps.forEach(p => {
       ctx.fillStyle = p.type === 'shield' ? '#00f' : '#ff0';
@@ -263,7 +221,6 @@
     });
   }
 
-  // Check collision between rectangles
   function checkCollision(rect1, rect2) {
     return rect1.x < rect2.x + (rect2.w || rect2.size) &&
            rect1.x + rect1.w > rect2.x &&
@@ -271,69 +228,48 @@
            rect1.y + rect1.h > rect2.y;
   }
 
-  // Update game state each frame
   function update() {
     if(gameOver) return;
 
     frameCount++;
 
-    // Animate car sprite based on keys
-    if(frameCount % 5 === 0) {
-      if(keys['ArrowLeft'] || keys['a']) currentFrame = 0;
-      else if(keys['ArrowRight'] || keys['d']) currentFrame = 2;
-      else currentFrame = 1;
-    }
-
-    // Move car left/right with boundaries
     if(keys['ArrowLeft'] || keys['a']) car.x -= car.speed;
     if(keys['ArrowRight'] || keys['d']) car.x += car.speed;
     car.x = Math.max(0, Math.min(canvas.width - car.w, car.x));
 
-    // Move obstacles and power-ups down
     obstacles.forEach(o => o.y += o.speed);
     powerUps.forEach(p => p.y += 2);
 
-    // Remove offscreen obstacles and power-ups
     obstacles = obstacles.filter(o => o.y < canvas.height);
     powerUps = powerUps.filter(p => p.y < canvas.height);
 
-    // Spawn obstacles and power-ups randomly
     if(Math.random() < 0.015) spawnObstacle();
     if(Math.random() < 0.007) spawnPowerUp();
 
-    // Check collisions with obstacles
     for(let o of obstacles) {
       if(checkCollision(car, o)) {
         if(shieldActive) {
-          // Destroy obstacle and deactivate shield
           obstacles = obstacles.filter(obs => obs !== o);
           shieldActive = false;
-          // Play shield power-down sound or collision sound?
-          collisionSound.play();
           break;
         } else {
-          collisionSound.play();
           return endGame();
         }
       }
     }
 
-    // Check collisions with power-ups
     powerUps.forEach((p, i) => {
       if(checkCollision(car, p)) {
         if(p.type === 'shield') {
           shieldActive = true;
-          shieldSound.play();
         } else if(p.type === 'boost') {
           boostActive = true;
-          boostTimer = 300; // frames (about 5 seconds at 60fps)
-          boostSound.play();
+          boostTimer = 300;
         }
         powerUps.splice(i, 1);
       }
     });
 
-    // Apply boost speed
     if(boostActive) {
       car.speed = canvas.width / 40;
       boostTimer--;
@@ -345,24 +281,19 @@
       car.speed = canvas.width / 80;
     }
 
-    // Increase difficulty
     score++;
     speed += 0.0008;
 
-    // Draw everything
     drawBackground();
     drawCar();
     drawObstacles();
     drawPowerUps();
 
-    // Update score display
     scoreEl.textContent = `Score: ${score}`;
 
-    // Loop
     requestAnimationFrame(update);
   }
 
-  // End the game
   function endGame() {
     gameOver = true;
     overlay.innerHTML = `
@@ -380,22 +311,14 @@
     };
   }
 
-  // Start game function
   function startGame() {
     resizeCanvas();
     reset();
     overlay.style.display = 'none';
     canvas.style.display = 'block';
-
-    // Play engine rev sound looped
-    engineSound.loop = true;
-    engineSound.currentTime = 0;
-    engineSound.play();
-
     update();
   }
 
-  // Event listeners for keyboard
   window.addEventListener('keydown', e => {
     keys[e.key] = true;
   });
@@ -403,7 +326,6 @@
     keys[e.key] = false;
   });
 
-  // Touch controls: left half = left, right half = right
   container.addEventListener('touchstart', e => {
     e.preventDefault();
     for(let touch of e.touches) {
@@ -419,13 +341,14 @@
     keys['ArrowRight'] = false;
   }, { passive: false });
 
-  // Start button listener
   startBtn.onclick = () => {
     startGame();
   };
 
-  // Initial setup
+  // Initialize
   resizeCanvas();
+  overlay.style.display = 'flex';
 </script>
+
 </body>
 </html>
