@@ -3,227 +3,240 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Color Dot Catcher Game</title>
+<title>Mental Ability Test Game</title>
 <style>
-  html, body {
-    margin: 0; padding: 0; height: 100%;
-    background: linear-gradient(135deg, #141e30, #243b55);
-    overflow: hidden;
+  body {
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    color: #fff;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: white;
+    margin: 0; padding: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
+    min-height: 100vh;
     user-select: none;
   }
-  #scoreboard {
+  header {
+    margin: 30px 0 10px;
     font-size: 2rem;
-    margin: 15px;
+    font-weight: bold;
     text-shadow: 0 0 8px #000;
   }
-  canvas {
-    display: block;
-    background: linear-gradient(135deg, #141e30, #243b55);
+  #test-container {
+    background: rgba(0,0,0,0.4);
     border-radius: 12px;
-    box-shadow: 0 0 30px #0f4c81;
-    max-width: 100vw;
-    max-height: 80vh;
-  }
-  #instructions {
-    font-size: 1rem;
+    padding: 20px 30px;
+    width: 90%;
     max-width: 600px;
-    padding: 10px 20px;
+    box-shadow: 0 0 20px #000;
+  }
+  #question {
+    font-size: 1.4rem;
+    margin-bottom: 20px;
+  }
+  .options {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+  button.option-btn {
+    padding: 12px 20px;
+    font-size: 1.1rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #4169e1;
+    color: white;
+    box-shadow: 0 0 8px #243a8c;
+    transition: background-color 0.3s ease;
+  }
+  button.option-btn:hover {
+    background: #2b4bbf;
+  }
+  button.option-btn.correct {
+    background: #28a745;
+    box-shadow: 0 0 12px #1e7a32;
+  }
+  button.option-btn.wrong {
+    background: #dc3545;
+    box-shadow: 0 0 12px #a22a2a;
+  }
+  #next-btn {
+    background: #17a2b8;
+    font-weight: bold;
+    padding: 12px 25px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    color: white;
+    font-size: 1.2rem;
+    display: none;
+    margin-top: 10px;
+    box-shadow: 0 0 12px #0f7a87;
+  }
+  #next-btn:hover {
+    background: #117a87;
+  }
+  #scoreboard {
+    margin-top: 20px;
+    font-size: 1.3rem;
     text-align: center;
-    color: #ccc;
-    user-select: none;
+    user-select: text;
+  }
+  #timer {
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    text-align: center;
   }
 </style>
 </head>
 <body>
 
-<div id="scoreboard">Score: 0</div>
-<canvas id="gameCanvas"></canvas>
-<div id="instructions">
-  Use <strong>WASD</strong> or <strong>Arrow keys</strong> to move.<br/>
-  Catch falling dots to score points. The faster you catch, the faster dots fall!
+<header>Mental Ability Test</header>
+<div id="test-container">
+  <div id="timer">Time left: 30 seconds</div>
+  <div id="question">Loading question...</div>
+  <div class="options" id="options"></div>
+  <button id="next-btn">Next Question</button>
+  <div id="scoreboard"></div>
 </div>
 
 <script>
-  (() => {
-    const canvas = document.getElementById('gameCanvas');
-    const ctx = canvas.getContext('2d');
-
-    // Responsive sizing
-    function resize() {
-      canvas.width = window.innerWidth * 0.95;
-      canvas.height = window.innerHeight * 0.7;
+(() => {
+  const questions = [
+    {
+      question: "What is the next number in the sequence? 2, 4, 8, 16, ?",
+      options: ["18", "24", "32", "30"],
+      answer: 2
+    },
+    {
+      question: "If ALLIGATOR is coded as GNIJVKEPQ, how is TIGER coded?",
+      options: ["VJKEP", "VKJEP", "VKJPE", "VJKPE"],
+      answer: 3
+    },
+    {
+      question: "Find the odd one out: Apple, Banana, Carrot, Grape",
+      options: ["Apple", "Banana", "Carrot", "Grape"],
+      answer: 2
+    },
+    {
+      question: "If 5 cats catch 5 mice in 5 minutes, how many cats catch 100 mice in 100 minutes?",
+      options: ["5", "20", "100", "50"],
+      answer: 0
+    },
+    {
+      question: "What comes next? J, F, M, A, M, ?",
+      options: ["J", "S", "J", "O"],
+      answer: 0
+    },
+    {
+      question: "A clock shows 3:15. What is the angle between the hour and minute hands?",
+      options: ["7.5°", "0°", "15°", "30°"],
+      answer: 0
+    },
+    {
+      question: "If all Bloops are Razzies and some Razzies are Lazzies, are all Bloops definitely Lazzies?",
+      options: ["Yes", "No", "Cannot be determined", "Sometimes"],
+      answer: 1
+    },
+    {
+      question: "Complete the analogy: Book is to Reading as Fork is to ___?",
+      options: ["Drawing", "Writing", "Stirring", "Eating"],
+      answer: 3
+    },
+    {
+      question: "If you rearrange the letters 'CIFAIPC' you get the name of a:",
+      options: ["Country", "City", "Ocean", "Animal"],
+      answer: 1
+    },
+    {
+      question: "Which number logically replaces the question mark? 3, 5, 9, 17, 33, ?",
+      options: ["57", "65", "49", "67"],
+      answer: 3
     }
-    window.addEventListener('resize', resize);
-    resize();
+  ];
 
-    // Player setup
-    const player = {
-      x: canvas.width / 2,
-      y: canvas.height - 50,
-      radius: 30,
-      color: '#00fff7',
-      speed: 6,
-      dx: 0,
-      dy: 0,
-    };
+  let currentIndex = 0;
+  let score = 0;
+  let timeLeft = 30;
+  let timerInterval;
 
-    // Falling dots
-    const dots = [];
-    const dotRadius = 15;
+  const questionEl = document.getElementById('question');
+  const optionsEl = document.getElementById('options');
+  const nextBtn = document.getElementById('next-btn');
+  const scoreboard = document.getElementById('scoreboard');
+  const timerEl = document.getElementById('timer');
 
-    // Game state
-    let score = 0;
-    let dotSpeed = 2;
-    let spawnInterval = 1200; // ms
-    let lastSpawn = 0;
+  function startTimer() {
+    timeLeft = 30;
+    timerEl.textContent = `Time left: ${timeLeft} seconds`;
+    timerInterval = setInterval(() => {
+      timeLeft--;
+      timerEl.textContent = `Time left: ${timeLeft} seconds`;
+      if (timeLeft <= 0) {
+        clearInterval(timerInterval);
+        disableOptions();
+        nextBtn.style.display = 'inline-block';
+      }
+    }, 1000);
+  }
 
-    // Keys pressed
-    const keys = {};
-
-    window.addEventListener('keydown', e => {
-      keys[e.code] = true;
+  function loadQuestion() {
+    startTimer();
+    nextBtn.style.display = 'none';
+    optionsEl.innerHTML = '';
+    const q = questions[currentIndex];
+    questionEl.textContent = `${currentIndex + 1}. ${q.question}`;
+    q.options.forEach((opt, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'option-btn';
+      btn.textContent = opt;
+      btn.onclick = () => selectAnswer(i, btn);
+      optionsEl.appendChild(btn);
     });
-    window.addEventListener('keyup', e => {
-      keys[e.code] = false;
-    });
+  }
 
-    // Touch controls: left/right halves of canvas
-    canvas.addEventListener('touchstart', e => {
-      e.preventDefault();
-      const touchX = e.touches[0].clientX - canvas.getBoundingClientRect().left;
-      if (touchX < canvas.width / 2) {
-        keys.ArrowLeft = true;
-        keys.ArrowRight = false;
-      } else {
-        keys.ArrowRight = true;
-        keys.ArrowLeft = false;
-      }
-    }, { passive: false });
-
-    canvas.addEventListener('touchend', e => {
-      e.preventDefault();
-      keys.ArrowLeft = false;
-      keys.ArrowRight = false;
-    }, { passive: false });
-
-    // Draw player
-    function drawPlayer() {
-      ctx.beginPath();
-      const gradient = ctx.createRadialGradient(player.x, player.y, player.radius*0.3, player.x, player.y, player.radius);
-      gradient.addColorStop(0, player.color);
-      gradient.addColorStop(1, '#005f62');
-      ctx.fillStyle = gradient;
-      ctx.shadowColor = player.color;
-      ctx.shadowBlur = 20;
-      ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.closePath();
+  function selectAnswer(selectedIndex, btn) {
+    clearInterval(timerInterval);
+    disableOptions();
+    const q = questions[currentIndex];
+    if (selectedIndex === q.answer) {
+      btn.classList.add('correct');
+      score++;
+    } else {
+      btn.classList.add('wrong');
+      // Highlight correct option
+      optionsEl.children[q.answer].classList.add('correct');
     }
+    nextBtn.style.display = 'inline-block';
+  }
 
-    // Draw dots
-    function drawDot(dot) {
-      ctx.beginPath();
-      const gradient = ctx.createRadialGradient(dot.x, dot.y, dot.radius*0.3, dot.x, dot.y, dot.radius);
-      gradient.addColorStop(0, dot.color);
-      gradient.addColorStop(1, '#000');
-      ctx.fillStyle = gradient;
-      ctx.shadowColor = dot.color;
-      ctx.shadowBlur = 15;
-      ctx.arc(dot.x, dot.y, dot.radius, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.closePath();
+  function disableOptions() {
+    [...optionsEl.children].forEach(btn => btn.disabled = true);
+  }
+
+  function nextQuestion() {
+    currentIndex++;
+    if (currentIndex >= questions.length) {
+      endTest();
+    } else {
+      loadQuestion();
     }
+  }
 
-    // Create a random colored dot at the top with random X
-    function spawnDot() {
-      const colors = ['#ff3c78', '#ffad33', '#8c33ff', '#33ffbd', '#33d1ff'];
-      const color = colors[Math.floor(Math.random() * colors.length)];
-      const x = Math.random() * (canvas.width - 2 * dotRadius) + dotRadius;
-      dots.push({ x, y: -dotRadius, radius: dotRadius, color });
-    }
+  function endTest() {
+    questionEl.textContent = `Test complete! Your score is ${score} out of ${questions.length}.`;
+    optionsEl.innerHTML = '';
+    nextBtn.style.display = 'none';
+    timerEl.textContent = '';
+    scoreboard.textContent = '';
+  }
 
-    // Update player position based on keys pressed
-    function updatePlayer() {
-      player.dx = 0;
-      if (keys.KeyA || keys.ArrowLeft) player.dx = -player.speed;
-      if (keys.KeyD || keys.ArrowRight) player.dx = player.speed;
+  nextBtn.addEventListener('click', nextQuestion);
 
-      player.x += player.dx;
-
-      // Keep inside canvas
-      if (player.x < player.radius) player.x = player.radius;
-      if (player.x > canvas.width - player.radius) player.x = canvas.width - player.radius;
-    }
-
-    // Update dots position and check collisions
-    function updateDots(deltaTime) {
-      for (let i = dots.length - 1; i >= 0; i--) {
-        const dot = dots[i];
-        dot.y += dotSpeed;
-
-        // Remove if off bottom
-        if (dot.y - dot.radius > canvas.height) {
-          dots.splice(i, 1);
-          continue;
-        }
-
-        // Check collision with player (circle collision)
-        const dist = Math.hypot(dot.x - player.x, dot.y - player.y);
-        if (dist < dot.radius + player.radius) {
-          dots.splice(i, 1);
-          score++;
-          updateScore();
-          increaseDifficulty();
-        }
-      }
-    }
-
-    // Update scoreboard UI
-    function updateScore() {
-      document.getElementById('scoreboard').textContent = `Score: ${score}`;
-    }
-
-    // Increase difficulty gradually
-    function increaseDifficulty() {
-      if (score % 5 === 0) {
-        dotSpeed += 0.5;
-        spawnInterval = Math.max(400, spawnInterval - 100);
-      }
-    }
-
-    // Game loop
-    let lastTime = performance.now();
-
-    function gameLoop(time) {
-      const deltaTime = time - lastTime;
-      lastTime = time;
-
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      updatePlayer();
-      updateDots(deltaTime);
-
-      drawPlayer();
-      dots.forEach(drawDot);
-
-      // Spawn new dots
-      if (time - lastSpawn > spawnInterval) {
-        spawnDot();
-        lastSpawn = time;
-      }
-
-      requestAnimationFrame(gameLoop);
-    }
-
-    // Start the game
-    updateScore();
-    requestAnimationFrame(gameLoop);
-  })();
+  loadQuestion();
+})();
 </script>
 
 </body>
