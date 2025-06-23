@@ -5,8 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Welcome to Mental Q....</title>
   <style>
-    /* Animated gradient background */
-    @keyframes gradientBG {
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@600&display=swap');
+
+    /* Background gradient animation */
+    @keyframes bgShift {
       0% {
         background-position: 0% 50%;
       }
@@ -18,121 +20,130 @@
       }
     }
 
-    html, body {
-      margin: 0; padding: 0; height: 100%;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      color: #eee;
-      display: flex; align-items: center; justify-content: center;
-      text-align: center;
-      position: relative;
-      overflow: hidden;
-      background: linear-gradient(270deg, 
-        #ff6f61, 
-        #ffcb6b, 
-        #6aff9c, 
-        #61d4ff, 
-        #a261ff, 
-        #ff61c1);
-      background-size: 1200% 1200%;
-      animation: gradientBG 20s ease infinite;
+    /* Floating shapes animation */
+    @keyframes floatUpDown {
+      0%, 100% {
+        transform: translateY(0);
+      }
+      50% {
+        transform: translateY(-20px);
+      }
     }
 
-    /* Background images container */
-    body::before,
-    body::after {
-      content: "";
+    /* Basic reset & full page */
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(270deg, 
+        #ff9a9e, #fad0c4, #fad0c4, #fbc2eb, #a6c1ee, #fbc2eb, #ff9a9e);
+      background-size: 1400% 1400%;
+      animation: bgShift 40s ease infinite;
+      position: relative;
+      color: #fff;
+      text-align: center;
+      user-select: none;
+    }
+
+    /* Floating translucent circles - glassy pastel blobs */
+    .blob {
       position: absolute;
       border-radius: 50%;
-      filter: blur(120px);
-      opacity: 0.15;
+      opacity: 0.2;
+      filter: blur(70px);
+      animation: floatUpDown 8s ease-in-out infinite;
+      mix-blend-mode: screen;
       pointer-events: none;
-      z-index: 0;
-      background-repeat: no-repeat;
-      background-position: center;
-      background-size: cover;
-    }
-    /* Left abstract blob */
-    body::before {
-      width: 450px;
-      height: 450px;
-      left: -150px;
-      top: 50%;
-      transform: translateY(-50%);
-      background-image: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80');
-      background-blend-mode: screen;
-      mix-blend-mode: screen;
-    }
-    /* Right abstract blob */
-    body::after {
-      width: 550px;
-      height: 550px;
-      right: -200px;
-      top: 40%;
-      transform: translateY(-40%);
-      background-image: url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=600&q=80');
-      background-blend-mode: screen;
-      mix-blend-mode: screen;
     }
 
+    .blob1 {
+      width: 350px;
+      height: 350px;
+      background: #ff6a9e;
+      top: 20%;
+      left: 10%;
+      animation-delay: 0s;
+    }
+    .blob2 {
+      width: 400px;
+      height: 400px;
+      background: #fad0c4;
+      top: 60%;
+      right: 15%;
+      animation-delay: 3s;
+    }
+    .blob3 {
+      width: 300px;
+      height: 300px;
+      background: #a6c1ee;
+      top: 40%;
+      left: 55%;
+      animation-delay: 5s;
+    }
+
+    /* Glassmorphic button style */
     a {
       position: relative;
       z-index: 10;
       display: inline-block;
+      padding: 1.4em 5em;
+      font-size: 2.8rem;
+      font-weight: 600;
       color: #fff;
-      font-size: 2.7rem;
-      text-decoration: none;
-      border: 3px solid rgba(255, 255, 255, 0.85);
-      padding: 1.3em 4.5em;
-      border-radius: 40px;
-      box-shadow:
-        0 4px 15px rgba(255, 255, 255, 0.4),
-        0 0 30px rgba(255, 255, 255, 0.2);
-      transition: 
-        background-color 0.4s ease, 
-        color 0.4s ease, 
-        box-shadow 0.4s ease,
-        transform 0.3s ease;
-      font-weight: 800;
-      letter-spacing: 1.5px;
       text-transform: uppercase;
-      user-select: none;
+      letter-spacing: 0.15em;
+      border-radius: 60px;
+      text-decoration: none;
+      background: rgba(255 255 255 / 0.15);
+      box-shadow:
+        0 8px 32px 0 rgba(255 255 255 / 0.15),
+        inset 0 0 0 1px rgba(255 255 255 / 0.3);
+      backdrop-filter: saturate(180%) blur(16px);
+      transition:
+        background-color 0.4s ease,
+        box-shadow 0.4s ease,
+        transform 0.3s ease,
+        color 0.4s ease;
       cursor: pointer;
-      backdrop-filter: saturate(180%) blur(6px);
-      background-color: rgba(255 255 255 / 0.1);
-      text-shadow: 0 0 5px rgba(255 255 255 / 0.5);
+      user-select: none;
     }
     a:hover, a:focus {
-      background-color: rgba(255, 255, 255, 0.9);
-      color: #222;
+      background: rgba(255 255 255 / 0.35);
       box-shadow:
-        0 8px 30px rgba(255, 255, 255, 0.9),
-        0 0 60px rgba(255, 111, 97, 0.9);
-      transform: scale(1.08);
+        0 12px 48px 0 rgba(255 111 97 / 0.6),
+        inset 0 0 0 2px rgba(255 255 255 / 0.7);
+      color: #ff6f61;
+      transform: scale(1.12);
       outline: none;
-      text-shadow: none;
     }
     a:active {
-      transform: scale(0.97);
+      transform: scale(1);
       box-shadow:
-        0 4px 15px rgba(255, 255, 255, 0.6);
+        0 6px 24px 0 rgba(255 111 97 / 0.4),
+        inset 0 0 0 1px rgba(255 255 255 / 0.5);
     }
 
     /* Responsive adjustments */
     @media (max-width: 600px) {
       a {
         font-size: 1.8rem;
-        padding: 1em 3em;
-      }
-      body::before {
-        width: 300px; height: 300px; left: -100px;
-      }
-      body::after {
-        width: 350px; height: 350px; right: -130px;
+        padding: 1em 3.2em;
       }
     }
+
   </style>
 </head>
 <body>
+  <!-- Floating blobs -->
+  <div class="blob blob1"></div>
+  <div class="blob blob2"></div>
+  <div class="blob blob3"></div>
+
+  <!-- The main button -->
   <a href="home.html" aria-label="Go to Home page" role="button">Welcome to Mental Q</a>
 </body>
 </html>
