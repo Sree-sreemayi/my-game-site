@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Color Bounce - PixiJS Game</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    overflow: hidden;
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #eee;
+    user-select: none;
+  }
+  #scoreboard {
+    position: absolute;
+    top: 12px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-shadow: 0 0 8px #000;
+    z-index: 10;
+  }
+</style>
+</head>
+<body>
+
+<div id="scoreboard">Score: 0</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.2.4/pixi.min.js"></script>
+<script>
+  const app = new PIXI.Application({
+    resizeTo: window,
+    backgroundColor: 0x1e3c72,
+    resolution: window.devicePixelRatio || 1,
+    autoDensity: true,
+    antialias: true,
+  });
+  document.body.appendChild(app.view);
+
+  const scoreboard = document.getElementById('scoreboard');
+
+  const player = new PIXI.Graphics();
+  const PLAYER_RADIUS = 30;
+  player.beginFill(0xff6f61);
+  player.drawCircle(0, 0, PLAYER_RADIUS);
+  player.endFill();
+  player.x = app.renderer.width / 2;
+  player.y = app.renderer.height / 2;
+  app.stage.addChild(player);
+
+  const stars = new PIXI.Container();
+  app.stage.addChild(stars);
+
+  const STAR_RADIUS = 15;
+  const MAX_STARS = 5;
+
+  let score = 0;
+
+  const speed = 300;
+  const keys = {};
+
+  window.addEventListener('keydown', e => keys[e.code] = true);
+  window.addEventListener('keyup', e => keys[e.code] = false);
+
+  app.view.addEventListener('pointerdown', e => {
+    const x = e.clientX;
+    const y = e.clientY;
+    const w = app.renderer.width;
+    const h = app.renderer.height;
+
+    keys.ArrowLeft = keys.ArrowRight = keys.ArrowUp = keys.ArrowDown = false;
+
+    if (x < w / 3) keys.ArrowLeft = true;
+    else if (x > 2 * w / 3) keys.ArrowRight = true;
+    else if (y < h / 3) keys.ArrowUp = true;
+    else keys.ArrowDown = true;
+  });
+  app.view.addEventListener('pointerup', () => {
+    keys.ArrowLeft = keys.ArrowRight = keys.ArrowUp = keys.ArrowDown = false;
+  });
+
+  function createStar() {
+    const star = new PIXI.Graphics();
+    const color = 0xffff66;
+    star.beginFill(color);
+    star.drawStar(0, 0, 5, STAR_RADIUS, 0.5);
+    star.endFill();
+    star.x = Math.random() * (app.renderer.width - 2 * STAR_RADIUS) + STAR_RADIUS;
+    star.y = Math.random() * (app.renderer.height - 2 * STAR_RADIUS) + STAR_RADIUS;
+
+    star.filters = [new PIXI.filters.GlowFilter({ distance: 15, outerStrength: 2, color: color })];
+
+    stars.addChild(star);
+  }
+
+  for(let i = 0; i < MAX_STARS; i++) createStar();
+
+  let lastTime = performance.now();
+
+  app.ticker.add(() => {
+    const now = performance.now();
+    const dt = (now - lastTime) / 1000;
+    lastTime = now;
+
+    let dx = 0, dy = 0;
+    if (keys.KeyW || keys.ArrowUp) dy -= 1;
+    if (keys.KeyS || keys.ArrowDown) dy += 1;
+    if (keys.KeyA || keys.ArrowLeft) dx -= 1;
+    if (keys.KeyD || keys.ArrowRight) dx += 1;
+
+    if (dx !== 0 || dy !== 0) {
+      const length = Math.hypot(dx, dy);
+      dx /= length;
+      dy /= length;
+    }
+
+    player.x += dx * speed * dt;
+    player.y += dy * speed * dt;
+
+    player.x = Math.min(app.renderer.width - PLAYER_RADIUS, Math.max(PLAYER_RADIUS, player.x));
+    player.y = Math.min(app.renderer.height - PLAYER_RADIUS, Math.max(PLAYER_RADIUS, player.y));
+
+    for (let i = stars.children.length - 1; i >= 0; i--) {
+      const star = stars.children[i];
+      const dist = Math.hypot(player.x - star.x, player.y - star.y);
+      if (dist < PLAYER_RADIUS + STAR_RADIUS - 5) {
+        stars.removeChild(star);
+        createStar();
+
+        score++;
+        scoreboard.textContent = `Score: ${score}`;
+
+        flashPlayer();
+      }
+    }
+  });
+
+  function flashPlayer() {
+    player.tint = 0xffffff;
+    setTimeout(() => {
+      player.tint = 0xff6f61;
+    }, 150);
+  }
+
+  let bgHue = 210;
+  app.ticker.add(() => {
+    bgHue += 0.3;
+    if (bgHue > 270) bgHue = 210;
+    const c = PIXI.utils.string2hex(`hsl(${bgHue}, 70%, 20%)`);
+    app.renderer.backgroundColor = c;
+  });
+</script>
+
+</body>
+</html>
