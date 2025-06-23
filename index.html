@@ -24,8 +24,8 @@
       color: #eee;
       display: flex; align-items: center; justify-content: center;
       text-align: center;
-
-      /* Gradient with smooth animation */
+      position: relative;
+      overflow: hidden;
       background: linear-gradient(270deg, 
         #ff6f61, 
         #ffcb6b, 
@@ -34,44 +34,101 @@
         #a261ff, 
         #ff61c1);
       background-size: 1200% 1200%;
-      animation: gradientBG 18s ease infinite;
+      animation: gradientBG 20s ease infinite;
+    }
+
+    /* Background images container */
+    body::before,
+    body::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.15;
+      pointer-events: none;
+      z-index: 0;
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: cover;
+    }
+    /* Left abstract blob */
+    body::before {
+      width: 450px;
+      height: 450px;
+      left: -150px;
+      top: 50%;
+      transform: translateY(-50%);
+      background-image: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=600&q=80');
+      background-blend-mode: screen;
+      mix-blend-mode: screen;
+    }
+    /* Right abstract blob */
+    body::after {
+      width: 550px;
+      height: 550px;
+      right: -200px;
+      top: 40%;
+      transform: translateY(-40%);
+      background-image: url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d?auto=format&fit=crop&w=600&q=80');
+      background-blend-mode: screen;
+      mix-blend-mode: screen;
     }
 
     a {
+      position: relative;
+      z-index: 10;
       display: inline-block;
       color: #fff;
-      font-size: 2.5rem;
+      font-size: 2.7rem;
       text-decoration: none;
       border: 3px solid rgba(255, 255, 255, 0.85);
-      padding: 1.2em 4em;
+      padding: 1.3em 4.5em;
       border-radius: 40px;
       box-shadow:
-        0 4px 10px rgba(255, 255, 255, 0.3),
-        0 0 20px rgba(255, 255, 255, 0.15);
+        0 4px 15px rgba(255, 255, 255, 0.4),
+        0 0 30px rgba(255, 255, 255, 0.2);
       transition: 
         background-color 0.4s ease, 
         color 0.4s ease, 
         box-shadow 0.4s ease,
         transform 0.3s ease;
-      font-weight: 700;
-      letter-spacing: 1.2px;
+      font-weight: 800;
+      letter-spacing: 1.5px;
       text-transform: uppercase;
       user-select: none;
       cursor: pointer;
+      backdrop-filter: saturate(180%) blur(6px);
+      background-color: rgba(255 255 255 / 0.1);
+      text-shadow: 0 0 5px rgba(255 255 255 / 0.5);
     }
     a:hover, a:focus {
       background-color: rgba(255, 255, 255, 0.9);
       color: #222;
       box-shadow:
-        0 8px 20px rgba(255, 255, 255, 0.8),
-        0 0 40px rgba(255, 111, 97, 0.7);
-      transform: scale(1.05);
+        0 8px 30px rgba(255, 255, 255, 0.9),
+        0 0 60px rgba(255, 111, 97, 0.9);
+      transform: scale(1.08);
       outline: none;
+      text-shadow: none;
     }
     a:active {
-      transform: scale(0.98);
+      transform: scale(0.97);
       box-shadow:
-        0 4px 12px rgba(255, 255, 255, 0.6);
+        0 4px 15px rgba(255, 255, 255, 0.6);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 600px) {
+      a {
+        font-size: 1.8rem;
+        padding: 1em 3em;
+      }
+      body::before {
+        width: 300px; height: 300px; left: -100px;
+      }
+      body::after {
+        width: 350px; height: 350px; right: -130px;
+      }
     }
   </style>
 </head>
