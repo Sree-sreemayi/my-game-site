@@ -1,119 +1,171 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-  <title>Ghost Chase 2D with PixiJS</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Ghost Chase 2D - PixiJS</title>
   <style>
-    body, html {
+    html, body {
       margin: 0; padding: 0;
-      width: 100%; height: 100%;
+      height: 100%;
+      background: #121212;
       overflow: hidden;
-      background: #111;
-    }
-    #game-canvas {
-      width: 100%; height: 100%;
-      display: block;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #eee;
+      user-select: none;
     }
     #info {
-      position: absolute; top: 10px; width: 100%;
-      text-align: center; color: #fff;
-      font: 1.2rem Arial, sans-serif;
-      z-index: 10; pointer-events: none;
+      position: absolute;
+      top: 12px;
+      width: 100%;
+      text-align: center;
+      font-size: 1.25rem;
+      z-index: 10;
+      pointer-events: none;
+      text-shadow: 0 0 8px #000;
     }
     @media (max-width: 600px) {
       #info {
         font-size: 1rem;
-        top: 5px;
+        top: 8px;
       }
     }
   </style>
 </head>
 <body>
-  <div id="info">Use WASD or Arrow keys / Tap on screen edges to move away from the ghost!</div>
+  <div id="info">Use WASD or Arrow keys to move away from the ghost! Tap screen edges on mobile.</div>
+
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.2.4/pixi.min.js"></script>
   <script>
+    // Setup Pixi Application
     const app = new PIXI.Application({
       resizeTo: window,
-      backgroundColor: 0x111111,
+      backgroundColor: 0x121212,
+      resolution: window.devicePixelRatio || 1,
+      autoDensity: true,
+      antialias: true,
     });
-    app.view.id = 'game-canvas';
     document.body.appendChild(app.view);
 
-    const loader = PIXI.Loader.shared;
-    loader
-      .add('man', 'https://i.imgur.com/4Nj0LNh.png') // Replace with real sprite URLs
+    // Load assets (transparent PNG sprites)
+    PIXI.Loader.shared
+      .add('man', 'https://i.imgur.com/4Nj0LNh.png')
       .add('ghost', 'https://i.imgur.com/pqK6k4Q.png')
       .load(setup);
 
+    // Variables
     let man, ghost;
-    const speed = 200; // px/sec
-    const ghostSpeed = 100;
+    const speed = 300; // player speed in px/sec
+    const ghostSpeed = 140; // ghost speed in px/sec
     const keys = {};
+    const margin = 40;
 
-    window.addEventListener('keydown', e => keys[e.code] = true);
-    window.addEventListener('keyup', e => keys[e.code] = false);
+    // Keyboard input listeners
+    window.addEventListener('keydown', (e) => {
+      keys[e.code] = true;
+    });
+    window.addEventListener('keyup', (e) => {
+      keys[e.code] = false;
+    });
 
-    // For mobile: tap on edges
+    // Mobile touch input - tap left/right/up edges
     app.view.addEventListener('pointerdown', e => {
-      const x = e.clientX, w = app.renderer.width;
-      if (x < w * 0.3) keys.ArrowLeft = true;
-      else if (x > w * 0.7) keys.ArrowRight = true;
-      else keys.ArrowUp = true;
+      const x = e.clientX;
+      const y = e.clientY;
+      const w = app.renderer.width;
+      const h = app.renderer.height;
+
+      keys.ArrowLeft = keys.ArrowRight = keys.ArrowUp = keys.ArrowDown = false;
+
+      if (x < w * 0.25) keys.ArrowLeft = true;
+      else if (x > w * 0.75) keys.ArrowRight = true;
+      else if (y < h * 0.33) keys.ArrowUp = true;
+      else keys.ArrowDown = true;
     });
     app.view.addEventListener('pointerup', () => {
-      keys.ArrowUp = keys.ArrowLeft = keys.ArrowRight = keys.ArrowDown = false;
+      keys.ArrowLeft = keys.ArrowRight = keys.ArrowUp = keys.ArrowDown = false;
     });
 
+    // Setup game scene
     function setup() {
-      man = new PIXI.Sprite(loader.resources.man.texture);
-      ghost = new PIXI.Sprite(loader.resources.ghost.texture);
+      man = new PIXI.Sprite(PIXI.Loader.shared.resources.man.texture);
+      ghost = new PIXI.Sprite(PIXI.Loader.shared.resources.ghost.texture);
 
-      [man.width, man.height] = [64, 64];
-      [ghost.width, ghost.height] = [64, 64];
-
+      // Size and anchors
+      man.width = man.height = 64;
+      ghost.width = ghost.height = 64;
       man.anchor.set(0.5);
       ghost.anchor.set(0.5);
 
+      // Start positions
       man.position.set(app.renderer.width / 2, app.renderer.height / 2);
       ghost.position.set(app.renderer.width * 0.2, app.renderer.height * 0.2);
 
-      app.stage.addChild(man, ghost);
+      // Add to stage
+      app.stage.addChild(ghost);
+      app.stage.addChild(man);
+
+      // Start game loop
       app.ticker.add(gameLoop);
     }
 
+    // Game Loop
+    let lastTime = performance.now();
+
     function gameLoop(delta) {
-      let moved = false;
-      const dt = delta / app.ticker.FPS;
+      const now = performance.now();
+      const dt = (now - lastTime) / 1000; // delta time in seconds
+      lastTime = now;
 
-      if (keys.KeyW || keys.ArrowUp) {
-        man.y -= speed * dt; moved = true;
-      }
-      if (keys.KeyS || keys.ArrowDown) {
-        man.y += speed * dt; moved = true;
-      }
-      if (keys.KeyA || keys.ArrowLeft) {
-        man.x -= speed * dt; moved = true;
-      }
-      if (keys.KeyD || keys.ArrowRight) {
-        man.x += speed * dt; moved = true;
+      // Player movement vector
+      let dx = 0, dy = 0;
+
+      if (keys.KeyW || keys.ArrowUp) dy -= 1;
+      if (keys.KeyS || keys.ArrowDown) dy += 1;
+      if (keys.KeyA || keys.ArrowLeft) dx -= 1;
+      if (keys.KeyD || keys.ArrowRight) dx += 1;
+
+      // Normalize movement
+      if (dx !== 0 || dy !== 0) {
+        const length = Math.hypot(dx, dy);
+        dx /= length;
+        dy /= length;
       }
 
-      const dx = man.x - ghost.x, dy = man.y - ghost.y;
-      const d = Math.hypot(dx, dy);
-      if (d < 40) {
+      // Update player position
+      man.x += dx * speed * dt;
+      man.y += dy * speed * dt;
+
+      // Keep man inside bounds
+      man.x = Math.min(app.renderer.width - margin, Math.max(margin, man.x));
+      man.y = Math.min(app.renderer.height - margin, Math.max(margin, man.y));
+
+      // Ghost chases man
+      let gdx = man.x - ghost.x;
+      let gdy = man.y - ghost.y;
+      let dist = Math.hypot(gdx, gdy);
+
+      // Normalize ghost movement
+      if (dist > 1) {
+        gdx /= dist;
+        gdy /= dist;
+      }
+
+      ghost.x += gdx * ghostSpeed * dt;
+      ghost.y += gdy * ghostSpeed * dt;
+
+      // Check collision
+      if (dist < 40) {
         app.ticker.stop();
         alert('👻 Caught by the ghost! Reload to play again.');
-        return;
       }
-
-      const nx = dx / d, ny = dy / d;
-      ghost.x += nx * ghostSpeed * dt;
-      ghost.y += ny * ghostSpeed * dt;
-
-      man.x = Math.max(32, Math.min(app.renderer.width - 32, man.x));
-      man.y = Math.max(32, Math.min(app.renderer.height - 32, man.y));
     }
+
+    // Resize handler to keep things consistent if needed
+    window.addEventListener('resize', () => {
+      // Optional: reposition characters or UI if needed on resize
+      // (Currently handled by resizeTo: window in Pixi Application)
+    });
   </script>
 </body>
 </html>
