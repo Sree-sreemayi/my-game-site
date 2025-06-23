@@ -1,36 +1,81 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" >
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Welcome to Mental Q....</title>
-<style>
-  html, body {
-    margin: 0; padding: 0; height: 100%;
-    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: #eee;
-    display: flex; align-items: center; justify-content: center;
-    text-align: center;
-  }
-  a {
-    color: #ff6f61;
-    font-size: 2rem;
-    text-decoration: none;
-    border: 2px solid #ff6f61;
-    padding: 1em 3em;
-    border-radius: 30px;
-    box-shadow: 0 4px 12px rgba(255,111,97,0.6);
-    transition: background-color 0.3s ease, color 0.3s ease;
-  }
-  a:hover, a:focus {
-    background-color: #ff6f61;
-    color: #222;
-    box-shadow: 0 6px 20px rgba(255,111,97,0.9);
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Welcome to Mental Q....</title>
+  <style>
+    /* Animated gradient background */
+    @keyframes gradientBG {
+      0% {
+        background-position: 0% 50%;
+      }
+      50% {
+        background-position: 100% 50%;
+      }
+      100% {
+        background-position: 0% 50%;
+      }
+    }
+
+    html, body {
+      margin: 0; padding: 0; height: 100%;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #eee;
+      display: flex; align-items: center; justify-content: center;
+      text-align: center;
+
+      /* Gradient with smooth animation */
+      background: linear-gradient(270deg, 
+        #ff6f61, 
+        #ffcb6b, 
+        #6aff9c, 
+        #61d4ff, 
+        #a261ff, 
+        #ff61c1);
+      background-size: 1200% 1200%;
+      animation: gradientBG 18s ease infinite;
+    }
+
+    a {
+      display: inline-block;
+      color: #fff;
+      font-size: 2.5rem;
+      text-decoration: none;
+      border: 3px solid rgba(255, 255, 255, 0.85);
+      padding: 1.2em 4em;
+      border-radius: 40px;
+      box-shadow:
+        0 4px 10px rgba(255, 255, 255, 0.3),
+        0 0 20px rgba(255, 255, 255, 0.15);
+      transition: 
+        background-color 0.4s ease, 
+        color 0.4s ease, 
+        box-shadow 0.4s ease,
+        transform 0.3s ease;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      user-select: none;
+      cursor: pointer;
+    }
+    a:hover, a:focus {
+      background-color: rgba(255, 255, 255, 0.9);
+      color: #222;
+      box-shadow:
+        0 8px 20px rgba(255, 255, 255, 0.8),
+        0 0 40px rgba(255, 111, 97, 0.7);
+      transform: scale(1.05);
+      outline: none;
+    }
+    a:active {
+      transform: scale(0.98);
+      box-shadow:
+        0 4px 12px rgba(255, 255, 255, 0.6);
+    }
+  </style>
 </head>
 <body>
-  <a href="home.html" aria-label="Go to Home page">welcomee.....</a>
+  <a href="home.html" aria-label="Go to Home page" role="button">Welcome to Mental Q</a>
 </body>
 </html>
