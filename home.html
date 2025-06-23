@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Color Bounce - Home</title>
+<style>
+  /* Reset and base */
+  html, body {
+    margin: 0; padding: 0;
+    height: 100%;
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #eee;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    user-select: none;
+  }
+
+  h1 {
+    font-size: 3rem;
+    margin-bottom: 0.2em;
+    text-shadow: 0 0 10px rgba(0,0,0,0.7);
+  }
+
+  p {
+    font-size: 1.25rem;
+    margin-bottom: 2em;
+    max-width: 320px;
+    line-height: 1.4;
+    text-shadow: 0 0 6px rgba(0,0,0,0.5);
+  }
+
+  a.button {
+    background: #ff6f61;
+    padding: 1em 2.5em;
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 50px;
+    box-shadow: 0 6px 10px rgba(255, 111, 97, 0.6);
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  a.button:hover, a.button:focus {
+    background: #ff836f;
+    box-shadow: 0 8px 14px rgba(255, 131, 111, 0.8);
+  }
+
+  /* Responsive */
+  @media (max-width: 480px) {
+    h1 {
+      font-size: 2.2rem;
+    }
+    p {
+      font-size: 1rem;
+      max-width: 90vw;
+    }
+    a.button {
+      font-size: 1.1rem;
+      padding: 0.9em 2em;
+    }
+  }
+</style>
+</head>
+<body>
+
+  <h1>🎉 Color Bounce</h1>
+  <p>Move your colorful ball to collect glowing stars and get the highest score! Use keyboard or tap screen edges on mobile. Ready to play?</p>
+  <a href="color_bounce.html" class="button" aria-label="Start Color Bounce Game">Start Game</a>
+
+</body>
+</html>
