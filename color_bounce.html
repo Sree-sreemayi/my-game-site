@@ -3,154 +3,227 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Color Bounce - PixiJS Game</title>
+<title>Color Dot Catcher Game</title>
 <style>
   html, body {
     margin: 0; padding: 0; height: 100%;
+    background: linear-gradient(135deg, #141e30, #243b55);
     overflow: hidden;
-    background: linear-gradient(135deg, #1e3c72, #2a5298);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: #eee;
+    color: white;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     user-select: none;
   }
   #scoreboard {
-    position: absolute;
-    top: 12px; left: 50%;
-    transform: translateX(-50%);
-    font-size: 1.5rem;
-    font-weight: bold;
+    font-size: 2rem;
+    margin: 15px;
     text-shadow: 0 0 8px #000;
-    z-index: 10;
+  }
+  canvas {
+    display: block;
+    background: linear-gradient(135deg, #141e30, #243b55);
+    border-radius: 12px;
+    box-shadow: 0 0 30px #0f4c81;
+    max-width: 100vw;
+    max-height: 80vh;
+  }
+  #instructions {
+    font-size: 1rem;
+    max-width: 600px;
+    padding: 10px 20px;
+    text-align: center;
+    color: #ccc;
+    user-select: none;
   }
 </style>
 </head>
 <body>
 
 <div id="scoreboard">Score: 0</div>
+<canvas id="gameCanvas"></canvas>
+<div id="instructions">
+  Use <strong>WASD</strong> or <strong>Arrow keys</strong> to move.<br/>
+  Catch falling dots to score points. The faster you catch, the faster dots fall!
+</div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.2.4/pixi.min.js"></script>
 <script>
-  const app = new PIXI.Application({
-    resizeTo: window,
-    backgroundColor: 0x1e3c72,
-    resolution: window.devicePixelRatio || 1,
-    autoDensity: true,
-    antialias: true,
-  });
-  document.body.appendChild(app.view);
+  (() => {
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
 
-  const scoreboard = document.getElementById('scoreboard');
+    // Responsive sizing
+    function resize() {
+      canvas.width = window.innerWidth * 0.95;
+      canvas.height = window.innerHeight * 0.7;
+    }
+    window.addEventListener('resize', resize);
+    resize();
 
-  const player = new PIXI.Graphics();
-  const PLAYER_RADIUS = 30;
-  player.beginFill(0xff6f61);
-  player.drawCircle(0, 0, PLAYER_RADIUS);
-  player.endFill();
-  player.x = app.renderer.width / 2;
-  player.y = app.renderer.height / 2;
-  app.stage.addChild(player);
+    // Player setup
+    const player = {
+      x: canvas.width / 2,
+      y: canvas.height - 50,
+      radius: 30,
+      color: '#00fff7',
+      speed: 6,
+      dx: 0,
+      dy: 0,
+    };
 
-  const stars = new PIXI.Container();
-  app.stage.addChild(stars);
+    // Falling dots
+    const dots = [];
+    const dotRadius = 15;
 
-  const STAR_RADIUS = 15;
-  const MAX_STARS = 5;
+    // Game state
+    let score = 0;
+    let dotSpeed = 2;
+    let spawnInterval = 1200; // ms
+    let lastSpawn = 0;
 
-  let score = 0;
+    // Keys pressed
+    const keys = {};
 
-  const speed = 300;
-  const keys = {};
+    window.addEventListener('keydown', e => {
+      keys[e.code] = true;
+    });
+    window.addEventListener('keyup', e => {
+      keys[e.code] = false;
+    });
 
-  window.addEventListener('keydown', e => keys[e.code] = true);
-  window.addEventListener('keyup', e => keys[e.code] = false);
+    // Touch controls: left/right halves of canvas
+    canvas.addEventListener('touchstart', e => {
+      e.preventDefault();
+      const touchX = e.touches[0].clientX - canvas.getBoundingClientRect().left;
+      if (touchX < canvas.width / 2) {
+        keys.ArrowLeft = true;
+        keys.ArrowRight = false;
+      } else {
+        keys.ArrowRight = true;
+        keys.ArrowLeft = false;
+      }
+    }, { passive: false });
 
-  app.view.addEventListener('pointerdown', e => {
-    const x = e.clientX;
-    const y = e.clientY;
-    const w = app.renderer.width;
-    const h = app.renderer.height;
+    canvas.addEventListener('touchend', e => {
+      e.preventDefault();
+      keys.ArrowLeft = false;
+      keys.ArrowRight = false;
+    }, { passive: false });
 
-    keys.ArrowLeft = keys.ArrowRight = keys.ArrowUp = keys.ArrowDown = false;
-
-    if (x < w / 3) keys.ArrowLeft = true;
-    else if (x > 2 * w / 3) keys.ArrowRight = true;
-    else if (y < h / 3) keys.ArrowUp = true;
-    else keys.ArrowDown = true;
-  });
-  app.view.addEventListener('pointerup', () => {
-    keys.ArrowLeft = keys.ArrowRight = keys.ArrowUp = keys.ArrowDown = false;
-  });
-
-  function createStar() {
-    const star = new PIXI.Graphics();
-    const color = 0xffff66;
-    star.beginFill(color);
-    star.drawStar(0, 0, 5, STAR_RADIUS, 0.5);
-    star.endFill();
-    star.x = Math.random() * (app.renderer.width - 2 * STAR_RADIUS) + STAR_RADIUS;
-    star.y = Math.random() * (app.renderer.height - 2 * STAR_RADIUS) + STAR_RADIUS;
-
-    star.filters = [new PIXI.filters.GlowFilter({ distance: 15, outerStrength: 2, color: color })];
-
-    stars.addChild(star);
-  }
-
-  for(let i = 0; i < MAX_STARS; i++) createStar();
-
-  let lastTime = performance.now();
-
-  app.ticker.add(() => {
-    const now = performance.now();
-    const dt = (now - lastTime) / 1000;
-    lastTime = now;
-
-    let dx = 0, dy = 0;
-    if (keys.KeyW || keys.ArrowUp) dy -= 1;
-    if (keys.KeyS || keys.ArrowDown) dy += 1;
-    if (keys.KeyA || keys.ArrowLeft) dx -= 1;
-    if (keys.KeyD || keys.ArrowRight) dx += 1;
-
-    if (dx !== 0 || dy !== 0) {
-      const length = Math.hypot(dx, dy);
-      dx /= length;
-      dy /= length;
+    // Draw player
+    function drawPlayer() {
+      ctx.beginPath();
+      const gradient = ctx.createRadialGradient(player.x, player.y, player.radius*0.3, player.x, player.y, player.radius);
+      gradient.addColorStop(0, player.color);
+      gradient.addColorStop(1, '#005f62');
+      ctx.fillStyle = gradient;
+      ctx.shadowColor = player.color;
+      ctx.shadowBlur = 20;
+      ctx.arc(player.x, player.y, player.radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.closePath();
     }
 
-    player.x += dx * speed * dt;
-    player.y += dy * speed * dt;
+    // Draw dots
+    function drawDot(dot) {
+      ctx.beginPath();
+      const gradient = ctx.createRadialGradient(dot.x, dot.y, dot.radius*0.3, dot.x, dot.y, dot.radius);
+      gradient.addColorStop(0, dot.color);
+      gradient.addColorStop(1, '#000');
+      ctx.fillStyle = gradient;
+      ctx.shadowColor = dot.color;
+      ctx.shadowBlur = 15;
+      ctx.arc(dot.x, dot.y, dot.radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.closePath();
+    }
 
-    player.x = Math.min(app.renderer.width - PLAYER_RADIUS, Math.max(PLAYER_RADIUS, player.x));
-    player.y = Math.min(app.renderer.height - PLAYER_RADIUS, Math.max(PLAYER_RADIUS, player.y));
+    // Create a random colored dot at the top with random X
+    function spawnDot() {
+      const colors = ['#ff3c78', '#ffad33', '#8c33ff', '#33ffbd', '#33d1ff'];
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      const x = Math.random() * (canvas.width - 2 * dotRadius) + dotRadius;
+      dots.push({ x, y: -dotRadius, radius: dotRadius, color });
+    }
 
-    for (let i = stars.children.length - 1; i >= 0; i--) {
-      const star = stars.children[i];
-      const dist = Math.hypot(player.x - star.x, player.y - star.y);
-      if (dist < PLAYER_RADIUS + STAR_RADIUS - 5) {
-        stars.removeChild(star);
-        createStar();
+    // Update player position based on keys pressed
+    function updatePlayer() {
+      player.dx = 0;
+      if (keys.KeyA || keys.ArrowLeft) player.dx = -player.speed;
+      if (keys.KeyD || keys.ArrowRight) player.dx = player.speed;
 
-        score++;
-        scoreboard.textContent = `Score: ${score}`;
+      player.x += player.dx;
 
-        flashPlayer();
+      // Keep inside canvas
+      if (player.x < player.radius) player.x = player.radius;
+      if (player.x > canvas.width - player.radius) player.x = canvas.width - player.radius;
+    }
+
+    // Update dots position and check collisions
+    function updateDots(deltaTime) {
+      for (let i = dots.length - 1; i >= 0; i--) {
+        const dot = dots[i];
+        dot.y += dotSpeed;
+
+        // Remove if off bottom
+        if (dot.y - dot.radius > canvas.height) {
+          dots.splice(i, 1);
+          continue;
+        }
+
+        // Check collision with player (circle collision)
+        const dist = Math.hypot(dot.x - player.x, dot.y - player.y);
+        if (dist < dot.radius + player.radius) {
+          dots.splice(i, 1);
+          score++;
+          updateScore();
+          increaseDifficulty();
+        }
       }
     }
-  });
 
-  function flashPlayer() {
-    player.tint = 0xffffff;
-    setTimeout(() => {
-      player.tint = 0xff6f61;
-    }, 150);
-  }
+    // Update scoreboard UI
+    function updateScore() {
+      document.getElementById('scoreboard').textContent = `Score: ${score}`;
+    }
 
-  let bgHue = 210;
-  app.ticker.add(() => {
-    bgHue += 0.3;
-    if (bgHue > 270) bgHue = 210;
-    const c = PIXI.utils.string2hex(`hsl(${bgHue}, 70%, 20%)`);
-    app.renderer.backgroundColor = c;
-  });
+    // Increase difficulty gradually
+    function increaseDifficulty() {
+      if (score % 5 === 0) {
+        dotSpeed += 0.5;
+        spawnInterval = Math.max(400, spawnInterval - 100);
+      }
+    }
+
+    // Game loop
+    let lastTime = performance.now();
+
+    function gameLoop(time) {
+      const deltaTime = time - lastTime;
+      lastTime = time;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      updatePlayer();
+      updateDots(deltaTime);
+
+      drawPlayer();
+      dots.forEach(drawDot);
+
+      // Spawn new dots
+      if (time - lastSpawn > spawnInterval) {
+        spawnDot();
+        lastSpawn = time;
+      }
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    // Start the game
+    updateScore();
+    requestAnimationFrame(gameLoop);
+  })();
 </script>
 
 </body>
