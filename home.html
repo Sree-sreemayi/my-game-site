@@ -1,69 +1,150 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" >
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Mentala Q.. - Home</title>
-<style>
-  html, body {
-    margin: 0; padding: 0;
-    height: 100%;
-    background: linear-gradient(135deg, #1e3c72, #2a5298);
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    color: #eee;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    user-select: none;
-  }
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mentala Q.. - Home</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@500;700&display=swap');
 
-  h1 {
-    font-size: 3rem;
-    margin-bottom: 0.2em;
-    text-shadow: 0 0 10px rgba(0,0,0,0.7);
-  }
+    /* Background gradient animation */
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
 
-  p {
-    font-size: 1.25rem;
-    margin-bottom: 2em;
-    max-width: 320px;
-    line-height: 1.4;
-    text-shadow: 0 0 6px rgba(0,0,0,0.5);
-  }
+    html, body {
+      margin: 0; padding: 0;
+      height: 100%;
+      font-family: 'Poppins', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      color: #f0f0f7;
+      background: linear-gradient(270deg, 
+        #1e3c72, #2a5298, #1e3c72, #245680);
+      background-size: 400% 400%;
+      animation: gradientBG 20s ease infinite;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 1em;
+      user-select: none;
+      position: relative;
+      overflow: hidden;
+    }
 
-  a.button {
-    background: #ff6f61;
-    padding: 1em 2.5em;
-    font-size: 1.3rem;
-    font-weight: bold;
-    color: #fff;
-    text-decoration: none;
-    border-radius: 50px;
-    box-shadow: 0 6px 10px rgba(255, 111, 97, 0.6);
-    transition: background-color 0.3s ease, box-shadow 0.3s ease;
-  }
+    /* Subtle floating circles */
+    body::before, body::after {
+      content: "";
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.15;
+      pointer-events: none;
+      z-index: 0;
+    }
 
-  a.button:hover, a.button:focus {
-    background: #ff836f;
-    box-shadow: 0 8px 14px rgba(255, 131, 111, 0.8);
-  }
+    body::before {
+      width: 400px;
+      height: 400px;
+      background: #ff6f61;
+      top: 20%;
+      left: 10%;
+      animation: floatY 7s ease-in-out infinite alternate;
+    }
 
-  @media (max-width: 480px) {
+    body::after {
+      width: 500px;
+      height: 500px;
+      background: #61dafb;
+      bottom: 15%;
+      right: 15%;
+      animation: floatY 9s ease-in-out infinite alternate;
+      animation-delay: 2s;
+    }
+
+    @keyframes floatY {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-30px); }
+    }
+
     h1 {
-      font-size: 2.2rem;
+      font-size: 3rem;
+      font-weight: 700;
+      margin-bottom: 0.4em;
+      text-shadow:
+        0 2px 6px rgba(0,0,0,0.5),
+        0 0 10px rgba(255,111,97,0.7);
+      position: relative;
+      z-index: 10;
     }
+
     p {
-      font-size: 1rem;
-      max-width: 90vw;
+      font-weight: 500;
+      font-size: 1.3rem;
+      margin-bottom: 2em;
+      max-width: 360px;
+      line-height: 1.5;
+      color: #f7f7facc;
+      text-shadow: 0 0 8px rgba(0,0,0,0.3);
+      position: relative;
+      z-index: 10;
     }
+
     a.button {
-      font-size: 1.1rem;
-      padding: 0.9em 2em;
+      position: relative;
+      z-index: 10;
+      background: linear-gradient(135deg, #ff6f61, #ff836f);
+      padding: 1.1em 3.2em;
+      font-size: 1.4rem;
+      font-weight: 600;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 60px;
+      box-shadow:
+        0 6px 15px rgba(255, 111, 97, 0.8),
+        0 0 20px rgba(255, 131, 111, 0.7);
+      transition:
+        background 0.3s ease,
+        box-shadow 0.3s ease,
+        transform 0.3s ease;
+      user-select: none;
+      cursor: pointer;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
     }
-  }
-</style>
+
+    a.button:hover,
+    a.button:focus {
+      background: linear-gradient(135deg, #ff836f, #ff6f61);
+      box-shadow:
+        0 10px 25px rgba(255, 111, 97, 1),
+        0 0 35px rgba(255, 131, 111, 0.9);
+      transform: scale(1.1);
+      outline: none;
+    }
+
+    a.button:active {
+      transform: scale(0.97);
+      box-shadow:
+        0 4px 10px rgba(255, 111, 97, 0.7);
+    }
+
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 2.1rem;
+      }
+      p {
+        font-size: 1rem;
+        max-width: 90vw;
+      }
+      a.button {
+        font-size: 1.2rem;
+        padding: 1em 2.4em;
+      }
+    }
+  </style>
 </head>
 <body>
 
