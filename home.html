@@ -28,10 +28,11 @@
       justify-content: center;
       align-items: center;
       text-align: center;
-      padding: 1em;
+      padding: 1em 1.5em;
       user-select: none;
       position: relative;
       overflow: hidden;
+      min-height: 100vh;
     }
 
     /* Subtle floating circles */
@@ -69,79 +70,141 @@
       100% { transform: translateY(-30px); }
     }
 
+    /* Floating star elements */
+    .star {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: #fff9;
+      border-radius: 50%;
+      filter: drop-shadow(0 0 2px #fff);
+      animation: twinkle 3s ease-in-out infinite;
+      opacity: 0.8;
+      pointer-events: none;
+      z-index: 0;
+    }
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.8; }
+      50% { opacity: 0.3; }
+    }
+
+    /* Heading style */
     h1 {
-      font-size: 3rem;
+      font-size: 3.2rem;
       font-weight: 700;
-      margin-bottom: 0.4em;
+      margin-bottom: 0.5em;
       text-shadow:
         0 2px 6px rgba(0,0,0,0.5),
-        0 0 10px rgba(255,111,97,0.7);
+        0 0 14px rgba(255,111,97,0.9);
       position: relative;
       z-index: 10;
+      letter-spacing: 0.05em;
+      user-select: text;
     }
 
+    /* Paragraph style */
     p {
       font-weight: 500;
-      font-size: 1.3rem;
-      margin-bottom: 2em;
-      max-width: 360px;
-      line-height: 1.5;
-      color: #f7f7facc;
-      text-shadow: 0 0 8px rgba(0,0,0,0.3);
+      font-size: 1.35rem;
+      margin-bottom: 2.5em;
+      max-width: 380px;
+      line-height: 1.6;
+      color: #f7f7fadd;
+      text-shadow: 0 0 10px rgba(0,0,0,0.4);
       position: relative;
       z-index: 10;
+      user-select: text;
     }
 
+    /* Button style */
     a.button {
       position: relative;
       z-index: 10;
       background: linear-gradient(135deg, #ff6f61, #ff836f);
-      padding: 1.1em 3.2em;
-      font-size: 1.4rem;
-      font-weight: 600;
+      padding: 1.2em 3.6em;
+      font-size: 1.45rem;
+      font-weight: 700;
       color: #fff;
       text-decoration: none;
       border-radius: 60px;
       box-shadow:
-        0 6px 15px rgba(255, 111, 97, 0.8),
-        0 0 20px rgba(255, 131, 111, 0.7);
+        0 6px 20px rgba(255, 111, 97, 0.85),
+        0 0 30px rgba(255, 131, 111, 0.75);
       transition:
         background 0.3s ease,
         box-shadow 0.3s ease,
         transform 0.3s ease;
       user-select: none;
       cursor: pointer;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.07em;
       text-transform: uppercase;
+      outline-offset: 4px;
+      outline-color: transparent;
     }
 
     a.button:hover,
-    a.button:focus {
+    a.button:focus-visible {
       background: linear-gradient(135deg, #ff836f, #ff6f61);
       box-shadow:
-        0 10px 25px rgba(255, 111, 97, 1),
-        0 0 35px rgba(255, 131, 111, 0.9);
-      transform: scale(1.1);
-      outline: none;
+        0 10px 35px rgba(255, 111, 97, 1),
+        0 0 50px rgba(255, 131, 111, 1);
+      transform: scale(1.12);
+      outline-color: #fff;
+      outline-style: solid;
+      outline-width: 2px;
     }
 
     a.button:active {
       transform: scale(0.97);
       box-shadow:
-        0 4px 10px rgba(255, 111, 97, 0.7);
+        0 4px 12px rgba(255, 111, 97, 0.7);
+    }
+
+    /* Button pulse animation */
+    @keyframes pulseGlow {
+      0%, 100% {
+        box-shadow:
+          0 6px 20px rgba(255, 111, 97, 0.85),
+          0 0 30px rgba(255, 131, 111, 0.75);
+      }
+      50% {
+        box-shadow:
+          0 10px 40px rgba(255, 111, 97, 1),
+          0 0 60px rgba(255, 131, 111, 1);
+      }
+    }
+
+    a.button.pulse {
+      animation: pulseGlow 2.8s ease-in-out infinite;
+    }
+
+    /* Responsive styles */
+    @media (max-width: 720px) {
+      h1 {
+        font-size: 2.8rem;
+      }
+      p {
+        font-size: 1.2rem;
+        max-width: 90vw;
+      }
+      a.button {
+        font-size: 1.3rem;
+        padding: 1em 3em;
+      }
     }
 
     @media (max-width: 480px) {
       h1 {
-        font-size: 2.1rem;
+        font-size: 2.2rem;
       }
       p {
-        font-size: 1rem;
+        font-size: 1.05rem;
         max-width: 90vw;
+        margin-bottom: 2em;
       }
       a.button {
-        font-size: 1.2rem;
-        padding: 1em 2.4em;
+        font-size: 1.15rem;
+        padding: 0.9em 2.4em;
       }
     }
   </style>
@@ -150,7 +213,14 @@
 
   <h1>🎉 Mental Q...</h1>
   <p>Move your colorful ball to collect glowing stars and get the highest score! Use keyboard or tap screen edges on mobile. Ready to play?</p>
-  <a href="color_bounce.html" class="button" aria-label="Start Color Bounce Game">Start Game</a>
+  <a href="color_bounce.html" class="button pulse" aria-label="Start Color Bounce Game">Start Game</a>
+
+  <!-- Floating stars -->
+  <div class="star" style="top: 15%; left: 25%; animation-delay: 0s;"></div>
+  <div class="star" style="top: 40%; left: 70%; animation-delay: 1.5s;"></div>
+  <div class="star" style="top: 75%; left: 35%; animation-delay: 3s;"></div>
+  <div class="star" style="top: 60%; left: 80%; animation-delay: 2.2s;"></div>
+  <div class="star" style="top: 30%; left: 50%; animation-delay: 4.5s;"></div>
 
 </body>
 </html>
