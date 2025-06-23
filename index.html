@@ -1,171 +1,180 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Ghost Chase 2D - PixiJS</title>
-  <style>
-    html, body {
-      margin: 0; padding: 0;
-      height: 100%;
-      background: #121212;
-      overflow: hidden;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      color: #eee;
-      user-select: none;
-    }
-    #info {
-      position: absolute;
-      top: 12px;
-      width: 100%;
-      text-align: center;
-      font-size: 1.25rem;
-      z-index: 10;
-      pointer-events: none;
-      text-shadow: 0 0 8px #000;
-    }
-    @media (max-width: 600px) {
-      #info {
-        font-size: 1rem;
-        top: 8px;
-      }
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Color Bounce - PixiJS Game</title>
+<style>
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    overflow: hidden;
+    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #eee;
+    user-select: none;
+  }
+  #scoreboard {
+    position: absolute;
+    top: 12px; left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-shadow: 0 0 8px #000;
+    z-index: 10;
+  }
+</style>
 </head>
 <body>
-  <div id="info">Use WASD or Arrow keys to move away from the ghost! Tap screen edges on mobile.</div>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.2.4/pixi.min.js"></script>
-  <script>
-    // Setup Pixi Application
-    const app = new PIXI.Application({
-      resizeTo: window,
-      backgroundColor: 0x121212,
-      resolution: window.devicePixelRatio || 1,
-      autoDensity: true,
-      antialias: true,
-    });
-    document.body.appendChild(app.view);
+<div id="scoreboard">Score: 0</div>
 
-    // Load assets (transparent PNG sprites)
-    PIXI.Loader.shared
-      .add('man', 'https://i.imgur.com/4Nj0LNh.png')
-      .add('ghost', 'https://i.imgur.com/pqK6k4Q.png')
-      .load(setup);
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.2.4/pixi.min.js"></script>
+<script>
+  // Setup PIXI app
+  const app = new PIXI.Application({
+    resizeTo: window,
+    backgroundColor: 0x1e3c72,
+    resolution: window.devicePixelRatio || 1,
+    autoDensity: true,
+    antialias: true,
+  });
+  document.body.appendChild(app.view);
 
-    // Variables
-    let man, ghost;
-    const speed = 300; // player speed in px/sec
-    const ghostSpeed = 140; // ghost speed in px/sec
-    const keys = {};
-    const margin = 40;
+  // Create scoreboard reference
+  const scoreboard = document.getElementById('scoreboard');
 
-    // Keyboard input listeners
-    window.addEventListener('keydown', (e) => {
-      keys[e.code] = true;
-    });
-    window.addEventListener('keyup', (e) => {
-      keys[e.code] = false;
-    });
+  // Create the player (a colorful circle)
+  const player = new PIXI.Graphics();
+  const PLAYER_RADIUS = 30;
+  player.beginFill(0xff6f61); // coral-ish color
+  player.drawCircle(0, 0, PLAYER_RADIUS);
+  player.endFill();
+  player.x = app.renderer.width / 2;
+  player.y = app.renderer.height / 2;
+  app.stage.addChild(player);
 
-    // Mobile touch input - tap left/right/up edges
-    app.view.addEventListener('pointerdown', e => {
-      const x = e.clientX;
-      const y = e.clientY;
-      const w = app.renderer.width;
-      const h = app.renderer.height;
+  // Create stars container
+  const stars = new PIXI.Container();
+  app.stage.addChild(stars);
 
-      keys.ArrowLeft = keys.ArrowRight = keys.ArrowUp = keys.ArrowDown = false;
+  // Star properties
+  const STAR_RADIUS = 15;
+  const MAX_STARS = 5;
 
-      if (x < w * 0.25) keys.ArrowLeft = true;
-      else if (x > w * 0.75) keys.ArrowRight = true;
-      else if (y < h * 0.33) keys.ArrowUp = true;
-      else keys.ArrowDown = true;
-    });
-    app.view.addEventListener('pointerup', () => {
-      keys.ArrowLeft = keys.ArrowRight = keys.ArrowUp = keys.ArrowDown = false;
-    });
+  // Score tracking
+  let score = 0;
 
-    // Setup game scene
-    function setup() {
-      man = new PIXI.Sprite(PIXI.Loader.shared.resources.man.texture);
-      ghost = new PIXI.Sprite(PIXI.Loader.shared.resources.ghost.texture);
+  // Movement
+  const speed = 300; // px per second
+  const keys = {};
 
-      // Size and anchors
-      man.width = man.height = 64;
-      ghost.width = ghost.height = 64;
-      man.anchor.set(0.5);
-      ghost.anchor.set(0.5);
+  window.addEventListener('keydown', e => keys[e.code] = true);
+  window.addEventListener('keyup', e => keys[e.code] = false);
 
-      // Start positions
-      man.position.set(app.renderer.width / 2, app.renderer.height / 2);
-      ghost.position.set(app.renderer.width * 0.2, app.renderer.height * 0.2);
+  // Touch controls: tap left/right/top/bottom half of screen for direction
+  app.view.addEventListener('pointerdown', e => {
+    const x = e.clientX;
+    const y = e.clientY;
+    const w = app.renderer.width;
+    const h = app.renderer.height;
 
-      // Add to stage
-      app.stage.addChild(ghost);
-      app.stage.addChild(man);
+    keys.ArrowLeft = keys.ArrowRight = keys.ArrowUp = keys.ArrowDown = false;
 
-      // Start game loop
-      app.ticker.add(gameLoop);
+    if (x < w / 3) keys.ArrowLeft = true;
+    else if (x > 2 * w / 3) keys.ArrowRight = true;
+    else if (y < h / 3) keys.ArrowUp = true;
+    else keys.ArrowDown = true;
+  });
+  app.view.addEventListener('pointerup', () => {
+    keys.ArrowLeft = keys.ArrowRight = keys.ArrowUp = keys.ArrowDown = false;
+  });
+
+  // Helper: create a glowing star
+  function createStar() {
+    const star = new PIXI.Graphics();
+    const color = 0xffff66; // warm yellow
+    star.beginFill(color);
+    star.drawStar(0, 0, 5, STAR_RADIUS, 0.5);
+    star.endFill();
+    star.x = Math.random() * (app.renderer.width - 2 * STAR_RADIUS) + STAR_RADIUS;
+    star.y = Math.random() * (app.renderer.height - 2 * STAR_RADIUS) + STAR_RADIUS;
+
+    // Glow filter
+    star.filters = [new PIXI.filters.GlowFilter({ distance: 15, outerStrength: 2, color: color })];
+
+    stars.addChild(star);
+  }
+
+  // Spawn initial stars
+  for(let i = 0; i < MAX_STARS; i++) createStar();
+
+  // Game loop
+  let lastTime = performance.now();
+
+  app.ticker.add(() => {
+    const now = performance.now();
+    const dt = (now - lastTime) / 1000;
+    lastTime = now;
+
+    // Calculate movement vector
+    let dx = 0, dy = 0;
+    if (keys.KeyW || keys.ArrowUp) dy -= 1;
+    if (keys.KeyS || keys.ArrowDown) dy += 1;
+    if (keys.KeyA || keys.ArrowLeft) dx -= 1;
+    if (keys.KeyD || keys.ArrowRight) dx += 1;
+
+    // Normalize diagonal movement
+    if (dx !== 0 || dy !== 0) {
+      const length = Math.hypot(dx, dy);
+      dx /= length;
+      dy /= length;
     }
 
-    // Game Loop
-    let lastTime = performance.now();
+    // Update player position
+    player.x += dx * speed * dt;
+    player.y += dy * speed * dt;
 
-    function gameLoop(delta) {
-      const now = performance.now();
-      const dt = (now - lastTime) / 1000; // delta time in seconds
-      lastTime = now;
+    // Keep player inside bounds
+    player.x = Math.min(app.renderer.width - PLAYER_RADIUS, Math.max(PLAYER_RADIUS, player.x));
+    player.y = Math.min(app.renderer.height - PLAYER_RADIUS, Math.max(PLAYER_RADIUS, player.y));
 
-      // Player movement vector
-      let dx = 0, dy = 0;
+    // Check collision with stars
+    for (let i = stars.children.length - 1; i >= 0; i--) {
+      const star = stars.children[i];
+      const dist = Math.hypot(player.x - star.x, player.y - star.y);
+      if (dist < PLAYER_RADIUS + STAR_RADIUS - 5) { // slight overlap margin
+        // Remove star and add new one
+        stars.removeChild(star);
+        createStar();
 
-      if (keys.KeyW || keys.ArrowUp) dy -= 1;
-      if (keys.KeyS || keys.ArrowDown) dy += 1;
-      if (keys.KeyA || keys.ArrowLeft) dx -= 1;
-      if (keys.KeyD || keys.ArrowRight) dx += 1;
+        // Update score
+        score++;
+        scoreboard.textContent = `Score: ${score}`;
 
-      // Normalize movement
-      if (dx !== 0 || dy !== 0) {
-        const length = Math.hypot(dx, dy);
-        dx /= length;
-        dy /= length;
-      }
-
-      // Update player position
-      man.x += dx * speed * dt;
-      man.y += dy * speed * dt;
-
-      // Keep man inside bounds
-      man.x = Math.min(app.renderer.width - margin, Math.max(margin, man.x));
-      man.y = Math.min(app.renderer.height - margin, Math.max(margin, man.y));
-
-      // Ghost chases man
-      let gdx = man.x - ghost.x;
-      let gdy = man.y - ghost.y;
-      let dist = Math.hypot(gdx, gdy);
-
-      // Normalize ghost movement
-      if (dist > 1) {
-        gdx /= dist;
-        gdy /= dist;
-      }
-
-      ghost.x += gdx * ghostSpeed * dt;
-      ghost.y += gdy * ghostSpeed * dt;
-
-      // Check collision
-      if (dist < 40) {
-        app.ticker.stop();
-        alert('👻 Caught by the ghost! Reload to play again.');
+        // Optional: flash player color briefly
+        flashPlayer();
       }
     }
+  });
 
-    // Resize handler to keep things consistent if needed
-    window.addEventListener('resize', () => {
-      // Optional: reposition characters or UI if needed on resize
-      // (Currently handled by resizeTo: window in Pixi Application)
-    });
-  </script>
+  // Flash player color for feedback
+  function flashPlayer() {
+    player.tint = 0xffffff;
+    setTimeout(() => {
+      player.tint = 0xffffff; // reset tint to normal (white = no tint)
+      player.tint = 0xff6f61;
+    }, 150);
+  }
+
+  // Background subtle color animation
+  let bgHue = 210; // starting hue (blue)
+  app.ticker.add(() => {
+    bgHue += 0.3;
+    if (bgHue > 270) bgHue = 210;
+    const c = PIXI.utils.string2hex(`hsl(${bgHue}, 70%, 20%)`);
+    app.renderer.backgroundColor = c;
+  });
+</script>
+
 </body>
 </html>
