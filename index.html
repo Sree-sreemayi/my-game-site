@@ -3,178 +3,34 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Color Bounce - PixiJS Game</title>
+<title>Welcome to Color Bounce</title>
 <style>
   html, body {
     margin: 0; padding: 0; height: 100%;
-    overflow: hidden;
-    background: linear-gradient(135deg, #1e3c72, #2a5298);
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     color: #eee;
-    user-select: none;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center;
   }
-  #scoreboard {
-    position: absolute;
-    top: 12px; left: 50%;
-    transform: translateX(-50%);
-    font-size: 1.5rem;
-    font-weight: bold;
-    text-shadow: 0 0 8px #000;
-    z-index: 10;
+  a {
+    color: #ff6f61;
+    font-size: 2rem;
+    text-decoration: none;
+    border: 2px solid #ff6f61;
+    padding: 1em 3em;
+    border-radius: 30px;
+    box-shadow: 0 4px 12px rgba(255,111,97,0.6);
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+  a:hover, a:focus {
+    background-color: #ff6f61;
+    color: #222;
+    box-shadow: 0 6px 20px rgba(255,111,97,0.9);
   }
 </style>
 </head>
 <body>
-
-<div id="scoreboard">Score: 0</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.2.4/pixi.min.js"></script>
-<script>
-  // Setup PIXI app
-  const app = new PIXI.Application({
-    resizeTo: window,
-    backgroundColor: 0x1e3c72,
-    resolution: window.devicePixelRatio || 1,
-    autoDensity: true,
-    antialias: true,
-  });
-  document.body.appendChild(app.view);
-
-  // Create scoreboard reference
-  const scoreboard = document.getElementById('scoreboard');
-
-  // Create the player (a colorful circle)
-  const player = new PIXI.Graphics();
-  const PLAYER_RADIUS = 30;
-  player.beginFill(0xff6f61); // coral-ish color
-  player.drawCircle(0, 0, PLAYER_RADIUS);
-  player.endFill();
-  player.x = app.renderer.width / 2;
-  player.y = app.renderer.height / 2;
-  app.stage.addChild(player);
-
-  // Create stars container
-  const stars = new PIXI.Container();
-  app.stage.addChild(stars);
-
-  // Star properties
-  const STAR_RADIUS = 15;
-  const MAX_STARS = 5;
-
-  // Score tracking
-  let score = 0;
-
-  // Movement
-  const speed = 300; // px per second
-  const keys = {};
-
-  window.addEventListener('keydown', e => keys[e.code] = true);
-  window.addEventListener('keyup', e => keys[e.code] = false);
-
-  // Touch controls: tap left/right/top/bottom half of screen for direction
-  app.view.addEventListener('pointerdown', e => {
-    const x = e.clientX;
-    const y = e.clientY;
-    const w = app.renderer.width;
-    const h = app.renderer.height;
-
-    keys.ArrowLeft = keys.ArrowRight = keys.ArrowUp = keys.ArrowDown = false;
-
-    if (x < w / 3) keys.ArrowLeft = true;
-    else if (x > 2 * w / 3) keys.ArrowRight = true;
-    else if (y < h / 3) keys.ArrowUp = true;
-    else keys.ArrowDown = true;
-  });
-  app.view.addEventListener('pointerup', () => {
-    keys.ArrowLeft = keys.ArrowRight = keys.ArrowUp = keys.ArrowDown = false;
-  });
-
-  // Helper: create a glowing star
-  function createStar() {
-    const star = new PIXI.Graphics();
-    const color = 0xffff66; // warm yellow
-    star.beginFill(color);
-    star.drawStar(0, 0, 5, STAR_RADIUS, 0.5);
-    star.endFill();
-    star.x = Math.random() * (app.renderer.width - 2 * STAR_RADIUS) + STAR_RADIUS;
-    star.y = Math.random() * (app.renderer.height - 2 * STAR_RADIUS) + STAR_RADIUS;
-
-    // Glow filter
-    star.filters = [new PIXI.filters.GlowFilter({ distance: 15, outerStrength: 2, color: color })];
-
-    stars.addChild(star);
-  }
-
-  // Spawn initial stars
-  for(let i = 0; i < MAX_STARS; i++) createStar();
-
-  // Game loop
-  let lastTime = performance.now();
-
-  app.ticker.add(() => {
-    const now = performance.now();
-    const dt = (now - lastTime) / 1000;
-    lastTime = now;
-
-    // Calculate movement vector
-    let dx = 0, dy = 0;
-    if (keys.KeyW || keys.ArrowUp) dy -= 1;
-    if (keys.KeyS || keys.ArrowDown) dy += 1;
-    if (keys.KeyA || keys.ArrowLeft) dx -= 1;
-    if (keys.KeyD || keys.ArrowRight) dx += 1;
-
-    // Normalize diagonal movement
-    if (dx !== 0 || dy !== 0) {
-      const length = Math.hypot(dx, dy);
-      dx /= length;
-      dy /= length;
-    }
-
-    // Update player position
-    player.x += dx * speed * dt;
-    player.y += dy * speed * dt;
-
-    // Keep player inside bounds
-    player.x = Math.min(app.renderer.width - PLAYER_RADIUS, Math.max(PLAYER_RADIUS, player.x));
-    player.y = Math.min(app.renderer.height - PLAYER_RADIUS, Math.max(PLAYER_RADIUS, player.y));
-
-    // Check collision with stars
-    for (let i = stars.children.length - 1; i >= 0; i--) {
-      const star = stars.children[i];
-      const dist = Math.hypot(player.x - star.x, player.y - star.y);
-      if (dist < PLAYER_RADIUS + STAR_RADIUS - 5) { // slight overlap margin
-        // Remove star and add new one
-        stars.removeChild(star);
-        createStar();
-
-        // Update score
-        score++;
-        scoreboard.textContent = `Score: ${score}`;
-
-        // Optional: flash player color briefly
-        flashPlayer();
-      }
-    }
-  });
-
-  // Flash player color for feedback
-  function flashPlayer() {
-    player.tint = 0xffffff;
-    setTimeout(() => {
-      player.tint = 0xffffff; // reset tint to normal (white = no tint)
-      player.tint = 0xff6f61;
-    }, 150);
-  }
-
-  // Background subtle color animation
-  let bgHue = 210; // starting hue (blue)
-  app.ticker.add(() => {
-    bgHue += 0.3;
-    if (bgHue > 270) bgHue = 210;
-    const c = PIXI.utils.string2hex(`hsl(${bgHue}, 70%, 20%)`);
-    app.renderer.backgroundColor = c;
-  });
-</script>
-
+  <a href="home.html" aria-label="Go to Home page">Enter Color Bounce</a>
 </body>
 </html>
